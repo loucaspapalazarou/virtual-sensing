@@ -1,10 +1,8 @@
 import os
 import torch
-from torch.utils.data import Dataset, DataLoader
-
-FRANKA_DOF = 9
-DATA_DIR = "/mnt/BigHD_1/loucas/force-sensor-data/"
-MAX_TIMESTEPS = 300
+import warnings
+from torch.utils.data import Dataset
+from constants import FRANKA_DOF, MAX_TIMESTEPS
 
 class FrankaSensorDataset(Dataset):
     """
@@ -32,6 +30,8 @@ class FrankaSensorDataset(Dataset):
             focal_length (int): Number of timesteps to include in each data point.
         """
         assert focal_length <= MAX_TIMESTEPS, "Focal length must be less than or equal to MAX_TIMESTEPS."
+        if focal_length > 24:
+            warnings.warn("Large focal length will cause many padding zeroes, use carefully.", UserWarning)
         self.focal_length = focal_length
         self.data_dir = data_dir
         self.franka_dof = franka_dof
@@ -77,22 +77,19 @@ class FrankaSensorDataset(Dataset):
         start_index = environment * self.franka_dof
         end_index = start_index + self.franka_dof
         data_points_list = []
+        
+        # Determine the device of the tensor
+        device = tensor.device
+        
         for t in range(start_timestep, end_timestep):
             data_points = tensor[t, start_index:end_index]
             data_points_list.append(data_points)
         
+        # Pad with zeroes, so we can stack batches
+        padding = torch.zeros(self.franka_dof, device=device)
+        for _ in range(end_timestep, timestep + self.focal_length):
+            data_points_list.append(padding)
+        
         # Stack data points to create a tensor of shape [focal_length, franka_dof]
         data_points_tensor = torch.stack(data_points_list)
         return data_points_tensor
-    
-
-# Instantiate the dataset
-force_sensor_dataset = FrankaSensorDataset(DATA_DIR, focal_length=2)
-
-# Create a DataLoader
-dataloader = DataLoader(dataset=force_sensor_dataset, batch_size=2, shuffle=True)
-
-# Iterate over the DataLoader
-for item in dataloader:
-    print(item)
-    break
