@@ -1,3 +1,5 @@
+from mamba_ssm import Mamba  # type: ignore
+
 import torch
 from torch.utils.data import DataLoader, random_split
 from torch import nn
@@ -43,25 +45,30 @@ class FrankaDataModule(pl.LightningDataModule):
         )
 
 
-class TransformerModel(pl.LightningModule):
+class MambaModel(pl.LightningModule):
     def __init__(
         self,
         d_model=35,
-        nhead=5,
         lr=0.001,
         step_size=5,
     ):
         super().__init__()
-        self.model = nn.Transformer(
-            d_model=d_model,
-            nhead=nhead,
-            batch_first=True,
-            num_encoder_layers=3,
-            num_decoder_layers=3,
-            dim_feedforward=256,
+        # self.model = nn.Transformer(
+        #     d_model=d_model,
+        #     nhead=nhead,
+        #     batch_first=True,
+        #     num_encoder_layers=3,
+        #     num_decoder_layers=3,
+        #     dim_feedforward=256,
+        # )
+        self.model = Mamba(
+            # This module uses roughly 3 * expand * d_model^2 parameters
+            d_model=d_model,  # Model dimension d_model
+            d_state=16,  # SSM state expansion factor
+            d_conv=4,  # Local convolution width
+            expand=2,  # Block expansion factor
         )
-        self.d_model = d_model
-        self.nhead = nhead
+
         self.lr = lr
         self.step_size = step_size
         self.save_hyperparameters()
@@ -116,19 +123,23 @@ class TransformerModel(pl.LightningModule):
 
 
 if __name__ == "__main__":
+    run_name = "default_run_name"
+    if len(sys.argv) > 1:
+        experiment_name = sys.argv[1]
+
     dm = FrankaDataModule(batch_size=32)
     model = TransformerModel(d_model=36, nhead=4, lr=0.001, step_size=4)
 
+    # Define the ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(
         monitor="val_loss",  # Monitor validation loss
         dirpath="checkpoints/",  # Directory to save checkpoints
-        filename=f"dmodel-{model.d_model}_nhead-{model.nhead}_lr-{model.lr}_stepsize-{model.step_size}"
-        + "-{epoch:02d}-{val_loss:.2f}",  # Format for checkpoint filenames
+        filename="{run_name}-{epoch:02d}-{val_loss:.2f}",  # Format for checkpoint filenames
         save_top_k=-1,  # Save all checkpoints
         mode="min",  # Save the model with the lowest validation loss
     )
 
-    wandb_logger = WandbLogger(project="transformer")
+    wandb_logger = WandbLogger(project="transformer", name=run_name)
 
     trainer = pl.Trainer(
         max_epochs=10, callbacks=[checkpoint_callback], logger=wandb_logger

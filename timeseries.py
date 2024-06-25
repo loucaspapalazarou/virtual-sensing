@@ -12,8 +12,8 @@ train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 val_loader = DataLoader(val_dataset, batch_size=32, shuffle=False)
 
 # Transformer model parameters
-d_model = 35
-nhead = 5
+d_model = 36
+nhead = 4
 model = nn.Transformer(d_model=d_model, nhead=nhead, batch_first=True).to(DEVICE)
 
 # Loss function and optimizer (not included in the provided snippet)
@@ -27,13 +27,13 @@ step_size = 5  # Adjust this as per your requirement
 for epoch in range(5):  # Example: Training for 5 epochs
     print(f"Epoch {epoch+1}")
     for batch_idx, batch in enumerate(train_loader):
-        print(f"Batch idx: {batch_idx}")
         batch_size, seq_len, input_size = batch.size()
 
         # Determine the number of subsequences we can extract
         num_subsequences = (seq_len - 1) // step_size
 
         # Iterate over subsequences
+        batch_loss = 0.0
         for i in range(num_subsequences):
             start_idx = i * step_size
             end_idx = start_idx + seq_len - 1
@@ -53,6 +53,9 @@ for epoch in range(5):  # Example: Training for 5 epochs
             loss.backward()
             optimizer.step()
 
-            print(f"Batch Loss: {loss.item()}")
+            batch_loss += loss.item()
+        print(
+            f"Batch {batch_idx}/{len(train_loader)} average loss: {batch_loss/num_subsequences}"
+        )
 
 print("Training finished.")
