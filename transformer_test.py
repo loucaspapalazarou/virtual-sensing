@@ -6,25 +6,24 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from dataset import FrankaDataset
 import sys
+import argparse
 from lightning.pytorch.loggers import WandbLogger
-
-# TODO
-"""
-- Organize code
-- Comments
-- Parameterize everything
-"""
 
 
 class FrankaDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size=32, num_workers=0):
+    def __init__(self, data_dir, batch_size=32, num_workers=0):
         super().__init__()
+        self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
 
     def setup(self, stage=None):
-        dataset = FrankaDataset()  # Replace with your dataset initialization
-        self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
+        dataset = FrankaDataset(
+            data_dir=self.data_dir
+        )  # Replace with your dataset initialization
+        self.train_dataset, self.val_dataset = random_split(
+            dataset, [int(0.8 * len(dataset)), int(0.2 * len(dataset))]
+        )
 
     def train_dataloader(self):
         return DataLoader(
@@ -115,22 +114,75 @@ class TransformerModel(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
 
-if __name__ == "__main__":
-    dm = FrankaDataModule(batch_size=32)
-    model = TransformerModel(d_model=36, nhead=4, lr=0.001, step_size=4)
+def main():
+    parser = argparse.ArgumentParser(description="Train a Transformer model.")
+    parser.add_argument(
+        "--data_dir",
+        type=str,
+        default="./data",
+        help="Directory containing the dataset",
+    )
+    parser.add_argument(
+        "--batch_size", type=int, default=32, help="Batch size for DataLoader"
+    )
+    parser.add_argument(
+        "--num_workers", type=int, default=0, help="Number of workers for DataLoader"
+    )
+    parser.add_argument(
+        "--d_model", type=int, default=36, help="Dimension of the model"
+    )
+    parser.add_argument(
+        "--nhead",
+        type=int,
+        default=4,
+        help="Number of heads in the multiheadattention models",
+    )
+    parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
+    parser.add_argument(
+        "--step_size", type=int, default=4, help="Step size for subsequence processing"
+    )
+    parser.add_argument(
+        "--max_epochs",
+        type=int,
+        default=10,
+        help="Maximum number of epochs to train for",
+    )
+    parser.add_argument(
+        "--project_name",
+        type=str,
+        default="transformer",
+        help="Project name for WandbLogger",
+    )
+    parser.add_argument(
+        "--checkpoint_dir",
+        type=str,
+        default="checkpoints/",
+        help="Directory to save checkpoints",
+    )
+
+    args = parser.parse_args()
+
+    dm = FrankaDataModule(batch_size=args.batch_size, num_workers=args.num_workers)
+    model = TransformerModel(
+        d_model=args.d_model, nhead=args.nhead, lr=args.lr, step_size=args.step_size
+    )
 
     checkpoint_callback = ModelCheckpoint(
         monitor="val_loss",  # Monitor validation loss
-        dirpath="checkpoints/",  # Directory to save checkpoints
-        filename=f"dmodel-{model.d_model}_nhead-{model.nhead}_lr-{model.lr}_stepsize-{model.step_size}"
+        dirpath=args.checkpoint_dir,  # Directory to save checkpoints
+        filename=f"dmodel-{args.d_model}_nhead-{args.nhead}_lr-{args.lr}_stepsize-{args.step_size}"
         + "-{epoch:02d}-{val_loss:.2f}",  # Format for checkpoint filenames
         save_top_k=-1,  # Save all checkpoints
         mode="min",  # Save the model with the lowest validation loss
     )
 
-    wandb_logger = WandbLogger(project="transformer")
+    wandb_logger = WandbLogger(project=args.project_name)
 
     trainer = pl.Trainer(
-        max_epochs=10, callbacks=[checkpoint_callback], logger=wandb_logger
+        max_epochs=args.max_epochs, callbacks=[checkpoint_callback], logger=wandb_logger
     )
     trainer.fit(model, dm)
+
+
+if __name__ == "__main__":
+    main()

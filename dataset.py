@@ -22,7 +22,8 @@ class FrankaDataset(Dataset):
         t = torch.load(self.file_list[file_idx])
         data = t[:, env_idx]
 
-        # just to make features even
+        # just to make feature dim even
+        # helps with transformer nhead param
         timesteps, _ = data.size()
         data = torch.cat((data, torch.zeros(timesteps, 1).to(data.device)), dim=1)
         ###
