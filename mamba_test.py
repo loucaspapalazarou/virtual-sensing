@@ -128,7 +128,7 @@ if __name__ == "__main__":
         experiment_name = sys.argv[1]
 
     dm = FrankaDataModule(batch_size=32)
-    model = TransformerModel(d_model=36, nhead=4, lr=0.001, step_size=4)
+    model = MambaModel(d_model=36, nhead=4, lr=0.001, step_size=4)
 
     # Define the ModelCheckpoint callback
     checkpoint_callback = ModelCheckpoint(

@@ -1,11 +1,10 @@
 import os
 import torch
 from torch.utils.data import Dataset
-from constants import DATA_DIR
 
 
 class FrankaDataset(Dataset):
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir):
         self.file_list = [
             os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pt")
         ]
@@ -26,13 +25,11 @@ class FrankaDataset(Dataset):
         # helps with transformer nhead param
         timesteps, _ = data.size()
         data = torch.cat((data, torch.zeros(timesteps, 1).to(data.device)), dim=1)
-        ###
 
         return data
 
     def __len__(self):
         return len(self.index_map)
 
-
-dataset = FrankaDataset()
-item = next(iter(dataset))
+    def get_dim(self):
+        return self.__getitem__(0).size(1)

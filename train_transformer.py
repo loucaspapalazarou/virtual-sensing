@@ -2,12 +2,12 @@ import torch
 from torch.utils.data import DataLoader, random_split
 from torch import nn
 import pytorch_lightning as pl
-from pytorch_lightning.loggers import TensorBoardLogger
+from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from dataset import FrankaDataset
-import sys
 import argparse
-from lightning.pytorch.loggers import WandbLogger
+
+DATA_DIM = 36
 
 
 class FrankaDataModule(pl.LightningDataModule):
@@ -18,12 +18,9 @@ class FrankaDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
 
     def setup(self, stage=None):
-        dataset = FrankaDataset(
-            data_dir=self.data_dir
-        )  # Replace with your dataset initialization
-        self.train_dataset, self.val_dataset = random_split(
-            dataset, [int(0.8 * len(dataset)), int(0.2 * len(dataset))]
-        )
+        dataset = FrankaDataset(data_dir=self.data_dir)
+        self.data_dim = dataset.get_dim()
+        self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 
     def train_dataloader(self):
         return DataLoader(
@@ -45,24 +42,27 @@ class FrankaDataModule(pl.LightningDataModule):
 class TransformerModel(pl.LightningModule):
     def __init__(
         self,
-        d_model=35,
-        nhead=5,
-        lr=0.001,
-        step_size=5,
+        d_model,
+        nhead,
+        num_encoder_layers,
+        num_decoder_layers,
+        dim_feedforward,
+        lr,
+        stride,
     ):
         super().__init__()
         self.model = nn.Transformer(
             d_model=d_model,
             nhead=nhead,
             batch_first=True,
-            num_encoder_layers=3,
-            num_decoder_layers=3,
-            dim_feedforward=256,
+            num_encoder_layers=num_encoder_layers,
+            num_decoder_layers=num_decoder_layers,
+            dim_feedforward=dim_feedforward,
         )
         self.d_model = d_model
         self.nhead = nhead
         self.lr = lr
-        self.step_size = step_size
+        self.stride = stride
         self.save_hyperparameters()
 
     def forward(self, src, tgt):
@@ -70,11 +70,11 @@ class TransformerModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
-        num_subsequences = (seq_len - 1) // self.step_size
+        num_subsequences = (seq_len - 1) // self.stride
 
         total_loss = 0.0
         for i in range(num_subsequences):
-            start_idx = i * self.step_size
+            start_idx = i * self.stride
             end_idx = start_idx + seq_len - 1
 
             src = batch[:, start_idx:end_idx, :]
@@ -91,11 +91,11 @@ class TransformerModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
-        num_subsequences = (seq_len - 1) // self.step_size
+        num_subsequences = (seq_len - 1) // self.stride
 
         total_loss = 0.0
         for i in range(num_subsequences):
-            start_idx = i * self.step_size
+            start_idx = i * self.stride
             end_idx = start_idx + seq_len - 1
 
             src = batch[:, start_idx:end_idx, :]
@@ -119,7 +119,7 @@ def main():
     parser.add_argument(
         "--data_dir",
         type=str,
-        default="./data",
+        default="../data",
         help="Directory containing the dataset",
     )
     parser.add_argument(
@@ -129,7 +129,10 @@ def main():
         "--num_workers", type=int, default=0, help="Number of workers for DataLoader"
     )
     parser.add_argument(
-        "--d_model", type=int, default=36, help="Dimension of the model"
+        "--num_encoder_layers", type=int, default=3, help="Number of encoder layers"
+    )
+    parser.add_argument(
+        "--num_decoder_layers", type=int, default=3, help="Number of decoder layers"
     )
     parser.add_argument(
         "--nhead",
@@ -139,7 +142,7 @@ def main():
     )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument(
-        "--step_size", type=int, default=4, help="Step size for subsequence processing"
+        "--stride", type=int, default=4, help="Step size for subsequence processing"
     )
     parser.add_argument(
         "--max_epochs",
@@ -159,28 +162,47 @@ def main():
         default="checkpoints/",
         help="Directory to save checkpoints",
     )
+    parser.add_argument(
+        "--use_wandb",
+        type=bool,
+        default=False,
+        help="Log in wandb",
+    )
 
     args = parser.parse_args()
 
-    dm = FrankaDataModule(batch_size=args.batch_size, num_workers=args.num_workers)
+    dm = FrankaDataModule(
+        data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers
+    )
+    dm.save_hyperparameters()
+
     model = TransformerModel(
-        d_model=args.d_model, nhead=args.nhead, lr=args.lr, step_size=args.step_size
+        d_model=DATA_DIM,
+        nhead=args.nhead,
+        num_encoder_layers=args.num_encoder_layers,
+        num_decoder_layers=args.num_decoder_layers,
+        dim_feedforward=256,
+        lr=args.lr,
+        stride=args.stride,
     )
 
     checkpoint_callback = ModelCheckpoint(
-        monitor="val_loss",  # Monitor validation loss
-        dirpath=args.checkpoint_dir,  # Directory to save checkpoints
-        filename=f"dmodel-{args.d_model}_nhead-{args.nhead}_lr-{args.lr}_stepsize-{args.step_size}"
-        + "-{epoch:02d}-{val_loss:.2f}",  # Format for checkpoint filenames
-        save_top_k=-1,  # Save all checkpoints
-        mode="min",  # Save the model with the lowest validation loss
+        monitor="val_loss",
+        dirpath=args.checkpoint_dir,
+        filename="dmodel-{d_model}_nhead-{nhead}_lr-{lr}_stepsize-{stride}-{epoch:02d}-{val_loss:.2f}",
+        save_top_k=3,
+        mode="min",  # Adjust as per needed operation
     )
 
-    wandb_logger = WandbLogger(project=args.project_name)
+    tensorboard_logger = TensorBoardLogger("tb_logs", name="transformer")
 
     trainer = pl.Trainer(
-        max_epochs=args.max_epochs, callbacks=[checkpoint_callback], logger=wandb_logger
+        max_epochs=args.max_epochs,
+        callbacks=[checkpoint_callback],
+        logger=[tensorboard_logger],
     )
+    if args.use_wandb:
+        trainer.loggers.append(WandbLogger(project=args.project_name))
     trainer.fit(model, dm)
 
 
