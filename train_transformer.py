@@ -6,20 +6,19 @@ from pytorch_lightning.loggers import TensorBoardLogger, WandbLogger
 from pytorch_lightning.callbacks import ModelCheckpoint
 from dataset import FrankaDataset
 import argparse
-
-DATA_DIM = 36
+import os
 
 
 class FrankaDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size=32, num_workers=0):
+    def __init__(self, data_dir, batch_size, num_workers):
         super().__init__()
+        self.save_hyperparameters()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
 
     def setup(self, stage=None):
         dataset = FrankaDataset(data_dir=self.data_dir)
-        self.data_dim = dataset.get_dim()
         self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 
     def train_dataloader(self):
@@ -49,8 +48,10 @@ class TransformerModel(pl.LightningModule):
         dim_feedforward,
         lr,
         stride,
+        prediction_horizon,
     ):
         super().__init__()
+        self.save_hyperparameters()
         self.model = nn.Transformer(
             d_model=d_model,
             nhead=nhead,
@@ -63,22 +64,26 @@ class TransformerModel(pl.LightningModule):
         self.nhead = nhead
         self.lr = lr
         self.stride = stride
-        self.save_hyperparameters()
+        self.prediction_horizon = prediction_horizon
 
     def forward(self, src, tgt):
         return self.model(src, tgt)
 
     def training_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
-        num_subsequences = (seq_len - 1) // self.stride
+        num_subsequences = (seq_len - self.prediction_horizon) // self.stride
 
         total_loss = 0.0
         for i in range(num_subsequences):
             start_idx = i * self.stride
-            end_idx = start_idx + seq_len - 1
+            end_idx = start_idx + seq_len - self.prediction_horizon
 
             src = batch[:, start_idx:end_idx, :]
-            tgt = batch[:, start_idx + 1 : end_idx + 1, :]
+            tgt = batch[
+                :,
+                start_idx + self.prediction_horizon : end_idx + self.prediction_horizon,
+                :,
+            ]
 
             output = self(src, tgt)
             loss = nn.functional.mse_loss(output, tgt)
@@ -91,15 +96,19 @@ class TransformerModel(pl.LightningModule):
 
     def validation_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
-        num_subsequences = (seq_len - 1) // self.stride
+        num_subsequences = (seq_len - self.prediction_horizon) // self.stride
 
         total_loss = 0.0
         for i in range(num_subsequences):
             start_idx = i * self.stride
-            end_idx = start_idx + seq_len - 1
+            end_idx = start_idx + seq_len - self.prediction_horizon
 
             src = batch[:, start_idx:end_idx, :]
-            tgt = batch[:, start_idx + 1 : end_idx + 1, :]
+            tgt = batch[
+                :,
+                start_idx + self.prediction_horizon : end_idx + self.prediction_horizon,
+                :,
+            ]
 
             output = self(src, tgt)
             loss = nn.functional.mse_loss(output, tgt)
@@ -140,6 +149,18 @@ def main():
         default=4,
         help="Number of heads in the multiheadattention models",
     )
+    parser.add_argument(
+        "--dim_feedforward",
+        type=int,
+        default=256,
+        help="Dimension of the feedforward layer",
+    )
+    parser.add_argument(
+        "--prediction_horizon",
+        type=int,
+        default=1,
+        help="Prediction Horizon",
+    )
     parser.add_argument("--lr", type=float, default=0.001, help="Learning rate")
     parser.add_argument(
         "--stride", type=int, default=4, help="Step size for subsequence processing"
@@ -163,27 +184,27 @@ def main():
         help="Directory to save checkpoints",
     )
     parser.add_argument(
-        "--use_wandb",
-        type=bool,
-        default=False,
-        help="Log in wandb",
+        "--wandb_project_name",
+        type=str,
+        default=None,
+        help="Project in wandb",
     )
 
     args = parser.parse_args()
 
-    dm = FrankaDataModule(
+    data_module = FrankaDataModule(
         data_dir=args.data_dir, batch_size=args.batch_size, num_workers=args.num_workers
     )
-    dm.save_hyperparameters()
 
     model = TransformerModel(
-        d_model=DATA_DIM,
+        d_model=int(os.getenv("DATA_DIM", 36)),
         nhead=args.nhead,
         num_encoder_layers=args.num_encoder_layers,
         num_decoder_layers=args.num_decoder_layers,
-        dim_feedforward=256,
+        dim_feedforward=args.dim_feedforward,
         lr=args.lr,
         stride=args.stride,
+        prediction_horizon=args.prediction_horizon,
     )
 
     checkpoint_callback = ModelCheckpoint(
@@ -191,7 +212,7 @@ def main():
         dirpath=args.checkpoint_dir,
         filename="dmodel-{d_model}_nhead-{nhead}_lr-{lr}_stepsize-{stride}-{epoch:02d}-{val_loss:.2f}",
         save_top_k=3,
-        mode="min",  # Adjust as per needed operation
+        mode="min",
     )
 
     tensorboard_logger = TensorBoardLogger("tb_logs", name="transformer")
@@ -201,9 +222,9 @@ def main():
         callbacks=[checkpoint_callback],
         logger=[tensorboard_logger],
     )
-    if args.use_wandb:
-        trainer.loggers.append(WandbLogger(project=args.project_name))
-    trainer.fit(model, dm)
+    if args.wandb_project_name is not None:
+        trainer.loggers.append(WandbLogger(project=args.wandb_project_name))
+    trainer.fit(model, data_module)
 
 
 if __name__ == "__main__":

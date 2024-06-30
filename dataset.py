@@ -16,6 +16,8 @@ class FrankaDataset(Dataset):
             for env_idx in range(num_envs):
                 self.index_map.append((file_idx, env_idx))
 
+        os.environ["DATA_DIM"] = str(self.get_dim())
+
     def __getitem__(self, index):
         file_idx, env_idx = self.index_map[index]
         t = torch.load(self.file_list[file_idx])
