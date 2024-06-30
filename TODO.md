@@ -1,5 +1,6 @@
 - Check correctness of transformer
 - Implement Mamba
+- Sync devices train/val-loss
 - Implement Wavenet
 - Validate that training loop is working correctly
 - Functionality for callbacks

@@ -56,7 +56,7 @@ def main():
     trainer = pl.Trainer(
         max_epochs=params["max_epochs"],
         fast_dev_run=args.fast_dev_run,
-        log_every_n_steps=5,
+        log_every_n_steps=20,
     )
 
     trainer.fit(model, data_module)
