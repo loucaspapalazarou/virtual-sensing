@@ -1,0 +1,8 @@
+- Check correctness of transformer
+- Implement Mamba
+- Implement Wavenet
+- Validate that training loop is working correctly
+- Functionality for callbacks
+- Visualize task (use ubutu dual boot?)
+- Normalize?
+- Varying weights and LR?
