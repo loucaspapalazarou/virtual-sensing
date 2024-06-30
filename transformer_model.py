@@ -5,6 +5,7 @@ import torch
 class TransformerModel(pl.LightningModule):
     def __init__(
         self,
+        name,
         d_model,
         nhead,
         num_encoder_layers,

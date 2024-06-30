@@ -1,16 +1,16 @@
 {
-  "data_dir": "/mnt/BigHD_1/loucas/test_data/",
-  "batch_size": 1,
+  "data_dir": "/mnt/BigHD_1/loucas/data/",
+  "batch_size": 12,
   "num_workers": 0,
   "max_epochs": 10,
   "transformer": {
     "num_encoder_layers": 3,
     "num_decoder_layers": 3,
-    "nhead": 4,
+    "nhead": 6,
     "dim_feedforward": 256,
-    "prediction_horizon": 20,
+    "prediction_horizon": 12,
     "lr": 0.001,
-    "stride": 250
+    "stride": 12
   },
   "mamba": {},
   "wavenet": {}

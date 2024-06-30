@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 class MambaModel(pl.LightningModule):
 
     def __init__(
-        self, d_model, d_state, d_conv, expand, lr, stride, prediction_horizon
+        self, d_model, d_state, d_conv, expand, lr, stride, prediction_horizon, name
     ):
         super().__init__()
         self.model = Mamba(

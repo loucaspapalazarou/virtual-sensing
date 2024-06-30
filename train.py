@@ -36,14 +36,15 @@ def main():
     match args.model:
         case "transformer":
             model = TransformerModel(
+                name=args.model,
                 d_model=DATA_DIM,
-                nhead=params["transformer"]["nhead"],
-                num_encoder_layers=params["transformer"]["num_encoder_layers"],
-                num_decoder_layers=params["transformer"]["num_decoder_layers"],
-                dim_feedforward=params["transformer"]["dim_feedforward"],
-                lr=params["transformer"]["lr"],
-                stride=params["transformer"]["stride"],
-                prediction_horizon=params["transformer"]["prediction_horizon"],
+                nhead=params[args.model]["nhead"],
+                num_encoder_layers=params[args.model]["num_encoder_layers"],
+                num_decoder_layers=params[args.model]["num_decoder_layers"],
+                dim_feedforward=params[args.model]["dim_feedforward"],
+                lr=params[args.model]["lr"],
+                stride=params[args.model]["stride"],
+                prediction_horizon=params[args.model]["prediction_horizon"],
             )
         case "mamba":
             raise NotImplementedError()
