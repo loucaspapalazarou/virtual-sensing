@@ -1,14 +1,11 @@
 import pytorch_lightning as pl
 from dataset import FrankaDataModule, DATA_DIM
 from models.transformer_model import TransformerModel
-from models.mamba_model import MambaModel
 import argparse
 import json
 
+from models.mamba_model import MambaModel
 from models.transformer_model import TransformerModel
-
-# from models.mamba_model import MambaModel
-# from models.wavenet_model import WaveNet
 
 
 def main():
@@ -36,18 +33,31 @@ def main():
     match args.model:
         case "transformer":
             model = TransformerModel(
+                # model specific params
                 name=args.model,
                 d_model=DATA_DIM,
                 nhead=params[args.model]["nhead"],
                 num_encoder_layers=params[args.model]["num_encoder_layers"],
                 num_decoder_layers=params[args.model]["num_decoder_layers"],
                 dim_feedforward=params[args.model]["dim_feedforward"],
-                lr=params[args.model]["lr"],
-                stride=params[args.model]["stride"],
-                prediction_horizon=params[args.model]["prediction_horizon"],
+                # general params
+                lr=params["lr"],
+                stride=params["stride"],
+                prediction_horizon=params["prediction_horizon"],
             )
         case "mamba":
-            raise NotImplementedError()
+            model = MambaModel(
+                # model specific params
+                name=args.model,
+                d_model=DATA_DIM,
+                d_state=params[args.model]["d_state"],
+                d_conv=params[args.model]["d_conv"],
+                expand=params[args.model]["expand"],
+                # general params
+                lr=params["lr"],
+                stride=params["stride"],
+                prediction_horizon=params["prediction_horizon"],
+            )
         case _:
             raise ValueError("Invalid model")
 

@@ -3,14 +3,18 @@
   "batch_size": 12,
   "num_workers": 0,
   "max_epochs": 10,
+  "prediction_horizon": 12,
+  "lr": 0.001,
+  "stride": 12,
   "transformer": {
     "num_encoder_layers": 3,
     "num_decoder_layers": 3,
     "nhead": 6,
-    "dim_feedforward": 256,
-    "prediction_horizon": 12,
-    "lr": 0.001,
-    "stride": 12
+    "dim_feedforward": 256
   },
-  "mamba": {}
+  "mamba": {
+    "d_state": 16,
+    "d_conv": 14,
+    "expand": 2
+  }
 }
