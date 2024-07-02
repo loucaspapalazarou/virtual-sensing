@@ -1,6 +1,7 @@
 import pytorch_lightning as pl
 from dataset import FrankaDataModule, DATA_DIM
-from transformer_model import TransformerModel
+from models.transformer_model import TransformerModel
+from models.mamba_model import MambaModel
 import argparse
 import json
 
@@ -47,8 +48,6 @@ def main():
                 prediction_horizon=params[args.model]["prediction_horizon"],
             )
         case "mamba":
-            raise NotImplementedError()
-        case "wavenet":
             raise NotImplementedError()
         case _:
             raise ValueError("Invalid model")

@@ -12,6 +12,5 @@
     "lr": 0.001,
     "stride": 12
   },
-  "mamba": {},
-  "wavenet": {}
+  "mamba": {}
 }
