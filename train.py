@@ -5,6 +5,11 @@ from models.mamba_model import MambaModel
 import argparse
 import json
 
+from models.transformer_model import TransformerModel
+
+# from models.mamba_model import MambaModel
+# from models.wavenet_model import WaveNet
+
 
 def main():
     parser = argparse.ArgumentParser(description="Read parameters from a JSON file")
@@ -28,12 +33,6 @@ def main():
     with open(args.config_file, "r") as f:
         params = json.load(f)
 
-    data_module = FrankaDataModule(
-        data_dir=params["data_dir"],
-        batch_size=params["batch_size"],
-        num_workers=params["num_workers"],
-    )
-
     match args.model:
         case "transformer":
             model = TransformerModel(
@@ -51,6 +50,12 @@ def main():
             raise NotImplementedError()
         case _:
             raise ValueError("Invalid model")
+
+    data_module = FrankaDataModule(
+        data_dir=params["data_dir"],
+        batch_size=params["batch_size"],
+        num_workers=params["num_workers"],
+    )
 
     trainer = pl.Trainer(
         max_epochs=params["max_epochs"],
