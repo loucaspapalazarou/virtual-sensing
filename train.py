@@ -14,13 +14,13 @@ def main():
         "--model", type=str, required=True, help="The model you want to train"
     )
     parser.add_argument(
-        "--config_file",
+        "--config-file",
         type=str,
         default="config.json",
         help="Path to the JSON file with parameters",
     )
     parser.add_argument(
-        "--fast_dev_run",
+        "--fast-dev-run",
         default=False,
         help="Dev run",
         action=argparse.BooleanOptionalAction,

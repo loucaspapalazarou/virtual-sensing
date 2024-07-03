@@ -21,8 +21,8 @@ class MambaModel(pl.LightningModule):
         self.prediction_horizon = prediction_horizon
         self.save_hyperparameters()
 
-    def forward(self, src, tgt):
-        return self.model(src, tgt)
+    def forward(self, src):
+        return self.model(src)
 
     def training_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
@@ -40,7 +40,10 @@ class MambaModel(pl.LightningModule):
                 :,
             ]
 
-            output = self(src, tgt)
+            print(src.shape)
+            print(tgt.shape)
+
+            output = self(src)
             loss = torch.nn.functional.mse_loss(output, tgt)
 
             total_loss += loss

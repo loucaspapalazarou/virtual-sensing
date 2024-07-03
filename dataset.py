@@ -2,7 +2,7 @@ import os
 import torch
 from torch.utils.data import Dataset
 import pytorch_lightning as pl
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader, random_split, Subset
 
 DATA_DIM = 36
 
@@ -42,15 +42,20 @@ class FrankaDataset(Dataset):
 
 
 class FrankaDataModule(pl.LightningDataModule):
-    def __init__(self, data_dir, batch_size, num_workers):
+
+    def __init__(self, data_dir, batch_size, num_workers, data_episodes=float("inf")):
         super().__init__()
         self.save_hyperparameters()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
+        self.data_episodes = data_episodes
 
     def setup(self, stage=None):
         dataset = FrankaDataset(data_dir=self.data_dir)
+        self.data_points = min(self.data_episodes, len(dataset))
+        print(f"Using {self.data_points}/{len(dataset)} data episodes")
+        dataset = Subset(dataset, range(self.data_points))
         self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 
     def train_dataloader(self):
