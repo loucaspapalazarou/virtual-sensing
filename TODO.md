@@ -5,3 +5,4 @@
 - Normalize?
 - Varying weights and LR?
 - Remove end in episodes since not doing anything?
+- Cube positions?

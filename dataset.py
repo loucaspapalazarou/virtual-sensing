@@ -8,11 +8,12 @@ DATA_DIM = 36
 
 
 class FrankaDataset(Dataset):
-    def __init__(self, data_dir):
+    def __init__(self, data_dir, episode_length):
         self.file_list = [
             os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pt")
         ]
         self.index_map = []  # maps array index to (file, env)
+        self.episode_length = episode_length
 
         # Populate the index_map
         for file_idx, filename in enumerate(self.file_list):
@@ -32,7 +33,8 @@ class FrankaDataset(Dataset):
         timesteps, _ = data.size()
         data = torch.cat((data, torch.zeros(timesteps, 1).to(data.device)), dim=1)
 
-        return data
+        curr_ep_len = data.size(0)
+        return data[0 : min(self.episode_length, curr_ep_len), :]
 
     def __len__(self):
         return len(self.index_map)
@@ -43,7 +45,7 @@ class FrankaDataset(Dataset):
 
 class FrankaDataModule(pl.LightningDataModule):
 
-    def __init__(self, data_dir, batch_size, num_workers, data_portion):
+    def __init__(self, data_dir, batch_size, num_workers, data_portion, episode_length):
         assert 0 < data_portion <= 1.0
         super().__init__()
         self.save_hyperparameters()
@@ -51,11 +53,16 @@ class FrankaDataModule(pl.LightningDataModule):
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.data_portion = data_portion
+        self.epidsode_length = episode_length
 
     def setup(self, stage=None):
-        dataset = FrankaDataset(data_dir=self.data_dir)
+        dataset = FrankaDataset(
+            data_dir=self.data_dir, episode_length=self.epidsode_length
+        )
         data_points = int(len(dataset) * self.data_portion)
-        print(f"Using {data_points}/{len(dataset)} data episodes")
+        print(
+            f"Using {data_points}/{len(dataset)} data episodes. Episode length: {self.epidsode_length}"
+        )
         dataset = Subset(dataset, range(data_points))
         self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 

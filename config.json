@@ -1,11 +1,12 @@
 {
   "data_dir": "/mnt/BigHD_1/loucas/data/",
-  "data_portion": 1.0,
-  "batch_size": 12,
+  "data_portion": 0.4,
+  "episode_length": 250,
+  "batch_size": 32,
   "num_workers": 0,
   "max_epochs": 10,
-  "prediction_distance": 4,
-  "window_size": 12,
+  "prediction_distance": 3,
+  "window_size": 16,
   "lr": 0.001,
   "stride": 2,
   "transformer": {

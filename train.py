@@ -66,6 +66,7 @@ def main():
         batch_size=params["batch_size"],
         num_workers=params["num_workers"],
         data_portion=params["data_portion"],
+        episode_length=params["episode_length"],
     )
 
     trainer = pl.Trainer(

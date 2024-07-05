@@ -1,0 +1,13 @@
+d_model: 36
+d_state: 16
+d_conv: 14
+expand: 2
+lr: 0.001
+stride: 2
+window_size: 16
+prediction_distance: 3
+name: mamba
+data_dir: /mnt/BigHD_1/loucas/data/
+batch_size: 32
+num_workers: 0
+data_portion: 0.4
