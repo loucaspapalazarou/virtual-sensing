@@ -42,7 +42,8 @@ def main():
                 # general params
                 lr=params["lr"],
                 stride=params["stride"],
-                prediction_horizon=params["prediction_horizon"],
+                window_size=params["window_size"],
+                prediction_distance=params["prediction_distance"],
             )
         case "mamba":
             model = MambaModel(

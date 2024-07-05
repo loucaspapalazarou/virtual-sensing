@@ -1,9 +1,7 @@
 - Check correctness of transformer
 - Implement Mamba
 - Sync devices train/val-loss
-- Implement Wavenet
 - Validate that training loop is working correctly
-- Functionality for callbacks
-- Visualize task (use ubutu dual boot?)
 - Normalize?
 - Varying weights and LR?
+- Remove end in episodes since not doing anything?

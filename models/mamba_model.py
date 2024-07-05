@@ -6,7 +6,16 @@ import pytorch_lightning as pl
 class MambaModel(pl.LightningModule):
 
     def __init__(
-        self, d_model, d_state, d_conv, expand, lr, stride, prediction_horizon, name
+        self,
+        d_model,
+        d_state,
+        d_conv,
+        expand,
+        lr,
+        stride,
+        window_size,
+        prediction_distance,
+        name="mamba",
     ):
         super().__init__()
         self.model = Mamba(
@@ -18,7 +27,8 @@ class MambaModel(pl.LightningModule):
         )
         self.lr = lr
         self.stride = stride
-        self.prediction_horizon = prediction_horizon
+        self.window_size = window_size
+        self.prediction_distance = prediction_distance
         self.save_hyperparameters()
 
     def forward(self, src):
@@ -26,55 +36,68 @@ class MambaModel(pl.LightningModule):
 
     def training_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
-        num_subsequences = (seq_len - self.prediction_horizon) // self.stride
-
         total_loss = 0.0
-        for i in range(num_subsequences):
-            start_idx = i * self.stride
-            end_idx = start_idx + seq_len - self.prediction_horizon
 
-            src = batch[:, start_idx:end_idx, :]
+        for i in range(
+            0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
+        ):
+
+            src = batch[:, i : i + self.window_size, :]
             tgt = batch[
                 :,
-                start_idx + self.prediction_horizon : end_idx + self.prediction_horizon,
+                i
+                + self.prediction_distance : i
+                + self.window_size
+                + self.prediction_distance,
                 :,
             ]
 
-            print(src.shape)
-            print(tgt.shape)
-
+            # Forward pass
             output = self(src)
-            loss = torch.nn.functional.mse_loss(output, tgt)
 
+            # Compute loss
+            loss = torch.nn.functional.mse_loss(output, tgt)
             total_loss += loss
 
-        avg_loss = total_loss / num_subsequences
-        self.log("train_loss", avg_loss)
+        total_steps = (
+            seq_len - (self.window_size + self.prediction_distance + 1) // self.stride
+        )
+        avg_loss = total_loss / total_steps
+        self.log("train_loss", avg_loss, sync_dist=True)
         return avg_loss
 
     def validation_step(self, batch, batch_idx):
         batch_size, seq_len, input_size = batch.size()
-        num_subsequences = (seq_len - self.prediction_horizon) // self.stride
-
         total_loss = 0.0
-        for i in range(num_subsequences):
-            start_idx = i * self.stride
-            end_idx = start_idx + seq_len - self.prediction_horizon
 
-            src = batch[:, start_idx:end_idx, :]
+        for i in range(
+            0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
+        ):
+            # Extract source and target sequences
+
+            src = batch[:, i : i + self.window_size, :]
             tgt = batch[
                 :,
-                start_idx + self.prediction_horizon : end_idx + self.prediction_horizon,
+                i
+                + self.prediction_distance : i
+                + self.window_size
+                + self.prediction_distance,
                 :,
             ]
 
-            output = self(src, tgt)
-            loss = torch.nn.functional.mse_loss(output, tgt)
+            # Forward pass
+            output = self(src)
 
+            # Compute loss
+            loss = torch.nn.functional.mse_loss(output, tgt)
             total_loss += loss
 
-        avg_loss = total_loss / num_subsequences
-        self.log("val_loss", avg_loss)
+        total_steps = (
+            seq_len - (self.window_size + self.prediction_distance + 1) // self.stride
+        )
+
+        avg_loss = total_loss / total_steps
+        self.log("val_loss", avg_loss, sync_dist=True)
         return avg_loss
 
     def configure_optimizers(self):
