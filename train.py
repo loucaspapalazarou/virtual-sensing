@@ -34,7 +34,6 @@ def main():
         case "transformer":
             model = TransformerModel(
                 # model specific params
-                name=args.model,
                 d_model=DATA_DIM,
                 nhead=params[args.model]["nhead"],
                 num_encoder_layers=params[args.model]["num_encoder_layers"],
@@ -48,7 +47,6 @@ def main():
         case "mamba":
             model = MambaModel(
                 # model specific params
-                name=args.model,
                 d_model=DATA_DIM,
                 d_state=params[args.model]["d_state"],
                 d_conv=params[args.model]["d_conv"],
@@ -56,7 +54,8 @@ def main():
                 # general params
                 lr=params["lr"],
                 stride=params["stride"],
-                prediction_horizon=params["prediction_horizon"],
+                window_size=params["window_size"],
+                prediction_distance=params["prediction_distance"],
             )
         case _:
             raise ValueError("Invalid model")
@@ -65,6 +64,7 @@ def main():
         data_dir=params["data_dir"],
         batch_size=params["batch_size"],
         num_workers=params["num_workers"],
+        data_portion=params["data_portion"],
     )
 
     trainer = pl.Trainer(

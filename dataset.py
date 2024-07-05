@@ -43,19 +43,20 @@ class FrankaDataset(Dataset):
 
 class FrankaDataModule(pl.LightningDataModule):
 
-    def __init__(self, data_dir, batch_size, num_workers, data_episodes=float("inf")):
+    def __init__(self, data_dir, batch_size, num_workers, data_portion):
+        assert 0 < data_portion <= 1.0
         super().__init__()
         self.save_hyperparameters()
         self.data_dir = data_dir
         self.batch_size = batch_size
         self.num_workers = num_workers
-        self.data_episodes = data_episodes
+        self.data_portion = data_portion
 
     def setup(self, stage=None):
         dataset = FrankaDataset(data_dir=self.data_dir)
-        self.data_points = min(self.data_episodes, len(dataset))
-        print(f"Using {self.data_points}/{len(dataset)} data episodes")
-        dataset = Subset(dataset, range(self.data_points))
+        data_points = int(len(dataset) * self.data_portion)
+        print(f"Using {data_points}/{len(dataset)} data episodes")
+        dataset = Subset(dataset, range(data_points))
         self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 
     def train_dataloader(self):

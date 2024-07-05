@@ -1,11 +1,13 @@
 {
   "data_dir": "/mnt/BigHD_1/loucas/data/",
+  "data_portion": 1.0,
   "batch_size": 12,
   "num_workers": 0,
   "max_epochs": 10,
-  "prediction_horizon": 12,
+  "prediction_distance": 4,
+  "window_size": 12,
   "lr": 0.001,
-  "stride": 12,
+  "stride": 2,
   "transformer": {
     "num_encoder_layers": 3,
     "num_decoder_layers": 3,
