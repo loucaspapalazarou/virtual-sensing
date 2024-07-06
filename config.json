@@ -1,14 +1,14 @@
 {
   "data_dir": "/mnt/BigHD_1/loucas/data-w-cubes/",
   "data_portion": 0.6,
-  "episode_length": 250,
+  "episode_length": 200,
   "batch_size": 32,
   "num_workers": 0,
   "max_epochs": 5,
   "prediction_distance": 3,
   "window_size": 16,
   "lr": 0.001,
-  "stride": 2,
+  "stride": 1,
   "log_every_n_steps": 20,
   "transformer": {
     "num_encoder_layers": 2,

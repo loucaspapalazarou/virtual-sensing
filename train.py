@@ -9,12 +9,13 @@ from models.transformer_model import TransformerModel
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Read parameters from a JSON file")
+    parser = argparse.ArgumentParser()
     parser.add_argument(
         "--model",
         type=str,
         required=True,
-        help="The name of the model you want to train (Options: transformer, mamba)",
+        help="The name of the model you want to train",
+        choices=["transformer", "mamba", "mamba2"],
     )
     parser.add_argument(
         "--config-file",
@@ -45,6 +46,7 @@ def main():
         case "transformer":
             model = TransformerModel(
                 # model specific params
+                name=args.model,
                 d_model=data_module.get_dim(),
                 nhead=params[args.model]["nhead"],
                 num_encoder_layers=params[args.model]["num_encoder_layers"],
@@ -59,6 +61,21 @@ def main():
         case "mamba":
             model = MambaModel(
                 # model specific params
+                name=args.model,
+                d_model=data_module.get_dim(),
+                d_state=params[args.model]["d_state"],
+                d_conv=params[args.model]["d_conv"],
+                expand=params[args.model]["expand"],
+                # general params
+                lr=params["lr"],
+                stride=params["stride"],
+                window_size=params["window_size"],
+                prediction_distance=params["prediction_distance"],
+            )
+        case "mamba2":
+            model = MambaModel(
+                # model specific params
+                name=args.model,
                 d_model=data_module.get_dim(),
                 d_state=params[args.model]["d_state"],
                 d_conv=params[args.model]["d_conv"],

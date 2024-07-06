@@ -1,5 +1,3 @@
-- Transformer add layer?
-- Varying weights and LR?
-- Cube positions?
 - masks + virtual sendingstre
-- dataset make even dims, not hardcoded
+- inference
+- use checkpoints

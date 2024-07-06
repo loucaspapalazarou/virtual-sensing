@@ -1,0 +1,15 @@
+d_model: 62
+nhead: 31
+num_encoder_layers: 2
+num_decoder_layers: 2
+dim_feedforward: 64
+lr: 0.001
+stride: 1
+window_size: 16
+prediction_distance: 3
+name: transformer
+data_dir: /mnt/BigHD_1/loucas/data-w-cubes/
+batch_size: 32
+num_workers: 0
+data_portion: 0.6
+episode_length: 200

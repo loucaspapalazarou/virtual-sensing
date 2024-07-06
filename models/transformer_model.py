@@ -15,7 +15,7 @@ class TransformerModel(pl.LightningModule):
         stride,
         window_size,
         prediction_distance,
-        name="transformer",
+        name,
     ):
         super().__init__()
         self.save_hyperparameters()
@@ -27,6 +27,7 @@ class TransformerModel(pl.LightningModule):
             num_decoder_layers=num_decoder_layers,
             dim_feedforward=dim_feedforward,
         )
+        self.name = name
         self.d_model = d_model
         self.nhead = nhead
         self.lr = lr
