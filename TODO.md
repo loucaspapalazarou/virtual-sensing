@@ -1,8 +1,5 @@
-- Check correctness of transformer
-- Implement Mamba
-- Sync devices train/val-loss
-- Validate that training loop is working correctly
-- Normalize?
+- Transformer add layer?
 - Varying weights and LR?
-- Remove end in episodes since not doing anything?
 - Cube positions?
+- masks + virtual sendingstre
+- dataset make even dims, not hardcoded

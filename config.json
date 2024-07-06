@@ -1,19 +1,19 @@
 {
   "data_dir": "/mnt/BigHD_1/loucas/data/",
-  "data_portion": 0.4,
+  "data_portion": 0.6,
   "episode_length": 250,
   "batch_size": 32,
   "num_workers": 0,
-  "max_epochs": 10,
+  "max_epochs": 5,
   "prediction_distance": 3,
   "window_size": 16,
   "lr": 0.001,
   "stride": 2,
   "transformer": {
-    "num_encoder_layers": 3,
-    "num_decoder_layers": 3,
+    "num_encoder_layers": 2,
+    "num_decoder_layers": 2,
     "nhead": 6,
-    "dim_feedforward": 256
+    "dim_feedforward": 64
   },
   "mamba": {
     "d_state": 16,
