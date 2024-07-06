@@ -1,5 +1,5 @@
 import pytorch_lightning as pl
-from dataset import FrankaDataModule, DATA_DIM
+from dataset import FrankaDataModule
 from models.transformer_model import TransformerModel
 import argparse
 import json
@@ -11,7 +11,10 @@ from models.transformer_model import TransformerModel
 def main():
     parser = argparse.ArgumentParser(description="Read parameters from a JSON file")
     parser.add_argument(
-        "--model", type=str, required=True, help="The model you want to train"
+        "--model",
+        type=str,
+        required=True,
+        help="The name of the model you want to train (Options: transformer, mamba)",
     )
     parser.add_argument(
         "--config-file",
@@ -30,11 +33,19 @@ def main():
     with open(args.config_file, "r") as f:
         params = json.load(f)
 
+    data_module = FrankaDataModule(
+        data_dir=params["data_dir"],
+        batch_size=params["batch_size"],
+        num_workers=params["num_workers"],
+        data_portion=params["data_portion"],
+        episode_length=params["episode_length"],
+    )
+
     match args.model:
         case "transformer":
             model = TransformerModel(
                 # model specific params
-                d_model=DATA_DIM,
+                d_model=data_module.get_dim(),
                 nhead=params[args.model]["nhead"],
                 num_encoder_layers=params[args.model]["num_encoder_layers"],
                 num_decoder_layers=params[args.model]["num_decoder_layers"],
@@ -48,7 +59,7 @@ def main():
         case "mamba":
             model = MambaModel(
                 # model specific params
-                d_model=DATA_DIM,
+                d_model=data_module.get_dim(),
                 d_state=params[args.model]["d_state"],
                 d_conv=params[args.model]["d_conv"],
                 expand=params[args.model]["expand"],
@@ -61,18 +72,10 @@ def main():
         case _:
             raise ValueError("Invalid model")
 
-    data_module = FrankaDataModule(
-        data_dir=params["data_dir"],
-        batch_size=params["batch_size"],
-        num_workers=params["num_workers"],
-        data_portion=params["data_portion"],
-        episode_length=params["episode_length"],
-    )
-
     trainer = pl.Trainer(
         max_epochs=params["max_epochs"],
+        log_every_n_steps=params["log_every_n_steps"],
         fast_dev_run=args.fast_dev_run,
-        log_every_n_steps=20,
     )
 
     trainer.fit(model, data_module)

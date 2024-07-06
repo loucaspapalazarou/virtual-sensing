@@ -4,8 +4,6 @@ from torch.utils.data import Dataset
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split, Subset
 
-DATA_DIM = 36
-
 
 class FrankaDataset(Dataset):
     def __init__(self, data_dir, episode_length):
@@ -21,26 +19,20 @@ class FrankaDataset(Dataset):
             for env_idx in range(num_envs):
                 self.index_map.append((file_idx, env_idx))
 
-        os.environ["DATA_DIM"] = str(self.get_dim())
-
     def __getitem__(self, index):
         file_idx, env_idx = self.index_map[index]
         t = torch.load(self.file_list[file_idx])
         data = t[:, env_idx]
 
-        # just to make feature dim even
-        # helps with transformer nhead param
-        timesteps, _ = data.size()
-        data = torch.cat((data, torch.zeros(timesteps, 1).to(data.device)), dim=1)
+        # Make feature dim even if it's not already
+        timesteps, features = data.size()
+        if features % 2 != 0:
+            data = torch.cat((data, torch.zeros(timesteps, 1).to(data.device)), dim=1)
 
-        curr_ep_len = data.size(0)
-        return data[0 : min(self.episode_length, curr_ep_len), :]
+        return data[0 : min(self.episode_length, timesteps), :]
 
     def __len__(self):
         return len(self.index_map)
-
-    def get_dim(self):
-        return self.__getitem__(0).size(1)
 
 
 class FrankaDataModule(pl.LightningDataModule):
@@ -81,3 +73,8 @@ class FrankaDataModule(pl.LightningDataModule):
             shuffle=False,
             num_workers=self.num_workers,
         )
+
+    def get_dim(self):
+        with open(os.path.join(self.data_dir, "dim")) as f:
+            dim = int(f.read())
+            return dim if dim % 2 == 0 else dim + 1
