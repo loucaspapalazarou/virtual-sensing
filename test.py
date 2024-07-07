@@ -33,7 +33,7 @@ def main():
             )
         # the mamba version is inside hparams, and encapsulated in MambaModel
         # with either version provided, the initialization here is the same
-        case "mamba" | "mamba2":
+        case "mamba":
             model = MambaModule.load_from_checkpoint(
                 checkpoint_path=args.checkpoint, hparams_file=args.hparams
             )

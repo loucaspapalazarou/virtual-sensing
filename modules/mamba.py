@@ -11,6 +11,7 @@ class MambaModule(pl.LightningModule):
         d_state,
         d_conv,
         expand,
+        headdim,
         lr,
         stride,
         window_size,
@@ -18,23 +19,14 @@ class MambaModule(pl.LightningModule):
         name,
     ):
         super().__init__()
-        match name:
-            case "mamba":
-                self.model = Mamba(
-                    d_model=d_model,
-                    d_state=d_state,
-                    d_conv=d_conv,
-                    expand=expand,
-                )
-            case "mamba2":
-                self.model = Mamba2(
-                    d_model=d_model,
-                    d_state=d_state,
-                    d_conv=d_conv,
-                    expand=expand,
-                )
-            case _:
-                raise ValueError(f"Model '{name}' not recognized")
+
+        self.model = Mamba(
+            d_model=d_model,
+            d_state=d_state,
+            d_conv=d_conv,
+            expand=expand,
+        )
+        self.automatic_optimization = False
         self.lr = lr
         self.stride = stride
         self.window_size = window_size
@@ -75,6 +67,8 @@ class MambaModule(pl.LightningModule):
             optimizer.zero_grad()
             self.manual_backward(loss)
             optimizer.step()
+
+        self.lr_schedulers().step()
 
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)

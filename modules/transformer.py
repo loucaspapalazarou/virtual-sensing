@@ -20,6 +20,7 @@ class TransformerModule(pl.LightningModule):
         name,
     ):
         super().__init__()
+        self.automatic_optimization = False
         self.save_hyperparameters()
         self.model = torch.nn.Transformer(
             d_model=d_model,
@@ -71,6 +72,8 @@ class TransformerModule(pl.LightningModule):
             optimizer.zero_grad()
             self.manual_backward(loss)
             optimizer.step()
+
+        self.lr_schedulers().step()
 
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)

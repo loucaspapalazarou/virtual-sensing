@@ -71,20 +71,6 @@ def main():
                 window_size=params["window_size"],
                 prediction_distance=params["prediction_distance"],
             )
-        case "mamba2":
-            model = MambaModule(
-                # model specific params
-                name=args.model,
-                d_model=data_module.get_dim(),
-                d_state=params[args.model]["d_state"],
-                d_conv=params[args.model]["d_conv"],
-                expand=params[args.model]["expand"],
-                # general params
-                lr=params["lr"],
-                stride=params["stride"],
-                window_size=params["window_size"],
-                prediction_distance=params["prediction_distance"],
-            )
         case _:
             raise ValueError("Invalid model")
 
