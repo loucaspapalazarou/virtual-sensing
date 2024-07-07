@@ -1,4 +1,4 @@
 - masks
 - virtual sensing
-- inference
 - INFERENCE IN TRANSFORMER (use only decoder/encoder?)
+- predict.py needs more work, don't print on stdout

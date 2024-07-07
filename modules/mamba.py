@@ -11,7 +11,6 @@ class MambaModule(pl.LightningModule):
         d_state,
         d_conv,
         expand,
-        headdim,
         lr,
         stride,
         window_size,
@@ -26,6 +25,7 @@ class MambaModule(pl.LightningModule):
             d_conv=d_conv,
             expand=expand,
         )
+        self.name = name
         self.automatic_optimization = False
         self.lr = lr
         self.stride = stride
@@ -67,8 +67,6 @@ class MambaModule(pl.LightningModule):
             optimizer.zero_grad()
             self.manual_backward(loss)
             optimizer.step()
-
-        self.lr_schedulers().step()
 
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)
@@ -115,4 +113,4 @@ class MambaModule(pl.LightningModule):
     def predict(self, input):
         self.model.eval()
         with torch.no_grad():
-            return self.model(input)
+            return self.model(input)[:, -1, :]

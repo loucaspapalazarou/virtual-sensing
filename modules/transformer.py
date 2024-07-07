@@ -73,8 +73,6 @@ class TransformerModule(pl.LightningModule):
             self.manual_backward(loss)
             optimizer.step()
 
-        self.lr_schedulers().step()
-
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)
         ) // self.stride

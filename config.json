@@ -1,15 +1,15 @@
 {
   "data_dir": "/mnt/BigHD_1/loucas/data-w-cubes/",
-  "data_portion": 0.1,
+  "data_portion": 1.0,
   "episode_length": 200,
   "batch_size": 32,
   "num_workers": 0,
-  "max_epochs": 5,
-  "prediction_distance": 3,
-  "window_size": 16,
+  "max_epochs": 2,
+  "prediction_distance": 1,
+  "window_size": 32,
   "lr": 0.001,
   "stride": 1,
-  "log_every_n_steps": 20,
+  "log_every_n_steps": 10,
   "transformer": {
     "num_encoder_layers": 3,
     "num_decoder_layers": 3,
@@ -17,8 +17,8 @@
     "dim_feedforward": 128
   },
   "mamba": {
-    "d_state": 16,
-    "d_conv": 14,
-    "expand": 2
+    "d_state": 20,
+    "d_conv": 16,
+    "expand": 4
   }
 }
