@@ -1,8 +1,10 @@
 import pytorch_lightning as pl
 import torch
 
+# TODO: Add prediction
 
-class TransformerModel(pl.LightningModule):
+
+class TransformerModule(pl.LightningModule):
 
     def __init__(
         self,
@@ -35,7 +37,6 @@ class TransformerModel(pl.LightningModule):
         self.window_size = window_size
         self.prediction_distance = prediction_distance
 
-    # check out masks: https://pytorch.org/docs/stable/generated/torch.nn.Transformer.html
     def forward(self, src, tgt):
         return self.model(src, tgt)
 
@@ -43,10 +44,12 @@ class TransformerModel(pl.LightningModule):
         batch_size, seq_len, input_size = batch.size()
         total_loss = 0.0
 
+        # Manually optimizing
+        optimizer = self.optimizers()
+
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
-
             src = batch[:, i : i + self.window_size, :]
             tgt = batch[
                 :,
@@ -64,9 +67,14 @@ class TransformerModel(pl.LightningModule):
             loss = torch.nn.functional.mse_loss(output, tgt)
             total_loss += loss
 
+            # Backward pass and optimization step
+            optimizer.zero_grad()
+            self.manual_backward(loss)
+            optimizer.step()
+
         total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1) // self.stride
-        )
+            seq_len - (self.window_size + self.prediction_distance + 1)
+        ) // self.stride
         avg_loss = total_loss / total_steps
         self.log("train_loss", avg_loss, sync_dist=True)
         return avg_loss
@@ -78,7 +86,6 @@ class TransformerModel(pl.LightningModule):
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
-
             src = batch[:, i : i + self.window_size, :]
             tgt = batch[
                 :,
@@ -97,12 +104,13 @@ class TransformerModel(pl.LightningModule):
             total_loss += loss
 
         total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1) // self.stride
-        )
+            seq_len - (self.window_size + self.prediction_distance + 1)
+        ) // self.stride
 
         avg_loss = total_loss / total_steps
         self.log("val_loss", avg_loss, sync_dist=True)
         return avg_loss
 
     def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
+        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
+        return optimizer

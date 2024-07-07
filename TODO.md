@@ -1,3 +1,4 @@
-- masks + virtual sendingstre
+- masks
+- virtual sensing
 - inference
-- use checkpoints
+- INFERENCE IN TRANSFORMER (use only decoder/encoder?)

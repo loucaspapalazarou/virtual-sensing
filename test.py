@@ -1,8 +1,9 @@
 import pytorch_lightning as pl
-from models.mamba_model import MambaModel
-from models.transformer_model import TransformerModel
+from modules.mamba import MambaModule
+from modules.transformer import TransformerModule
 import argparse
 import yaml
+import torch
 
 
 def main():
@@ -27,19 +28,23 @@ def main():
 
     match model_name:
         case "transformer":
-            model = TransformerModel.load_from_checkpoint(
+            model = TransformerModule.load_from_checkpoint(
                 checkpoint_path=args.checkpoint, hparams_file=args.hparams
             )
         # the mamba version is inside hparams, and encapsulated in MambaModel
         # with either version provided, the initialization here is the same
         case "mamba" | "mamba2":
-            model = MambaModel.load_from_checkpoint(
+            model = MambaModule.load_from_checkpoint(
                 checkpoint_path=args.checkpoint, hparams_file=args.hparams
             )
         case _:
             raise ValueError("Invalid model")
 
-    print(model)
+    raise NotImplementedError("what now?")
+
+    # res = model.predict(torch.rand(1, 40, 36))
+    # print(res)
+    # print(res.shape)
 
 
 if __name__ == "__main__":

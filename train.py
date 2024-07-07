@@ -1,11 +1,10 @@
 import pytorch_lightning as pl
 from dataset import FrankaDataModule
-from models.transformer_model import TransformerModel
 import argparse
 import json
 
-from models.mamba_model import MambaModel
-from models.transformer_model import TransformerModel
+from modules.transformer import TransformerModule
+from modules.mamba import MambaModule
 
 
 def main():
@@ -44,7 +43,7 @@ def main():
 
     match args.model:
         case "transformer":
-            model = TransformerModel(
+            model = TransformerModule(
                 # model specific params
                 name=args.model,
                 d_model=data_module.get_dim(),
@@ -59,7 +58,7 @@ def main():
                 prediction_distance=params["prediction_distance"],
             )
         case "mamba":
-            model = MambaModel(
+            model = MambaModule(
                 # model specific params
                 name=args.model,
                 d_model=data_module.get_dim(),
@@ -73,7 +72,7 @@ def main():
                 prediction_distance=params["prediction_distance"],
             )
         case "mamba2":
-            model = MambaModel(
+            model = MambaModule(
                 # model specific params
                 name=args.model,
                 d_model=data_module.get_dim(),

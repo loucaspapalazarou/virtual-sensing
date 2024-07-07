@@ -3,7 +3,7 @@ from mamba_ssm import Mamba, Mamba2  # type: ignore
 import pytorch_lightning as pl
 
 
-class MambaModel(pl.LightningModule):
+class MambaModule(pl.LightningModule):
 
     def __init__(
         self,
@@ -21,19 +21,17 @@ class MambaModel(pl.LightningModule):
         match name:
             case "mamba":
                 self.model = Mamba(
-                    # This module uses roughly 3 * expand * d_model^2 parameters
-                    d_model=d_model,  # Model dimension d_model
-                    d_state=d_state,  # SSM state expansion factor
-                    d_conv=d_conv,  # Local convolution width
-                    expand=expand,  # Block expansion factor
+                    d_model=d_model,
+                    d_state=d_state,
+                    d_conv=d_conv,
+                    expand=expand,
                 )
             case "mamba2":
                 self.model = Mamba2(
-                    # This module uses roughly 3 * expand * d_model^2 parameters
-                    d_model=d_model,  # Model dimension d_model
-                    d_state=d_state,  # SSM state expansion factor
-                    d_conv=d_conv,  # Local convolution width
-                    expand=expand,  # Block expansion factor
+                    d_model=d_model,
+                    d_state=d_state,
+                    d_conv=d_conv,
+                    expand=expand,
                 )
             case _:
                 raise ValueError(f"Model '{name}' not recognized")
@@ -50,10 +48,12 @@ class MambaModel(pl.LightningModule):
         batch_size, seq_len, input_size = batch.size()
         total_loss = 0.0
 
+        # Manually optimizing
+        optimizer = self.optimizers()
+
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
-
             src = batch[:, i : i + self.window_size, :]
             tgt = batch[
                 :,
@@ -71,9 +71,14 @@ class MambaModel(pl.LightningModule):
             loss = torch.nn.functional.mse_loss(output, tgt)
             total_loss += loss
 
+            # Backward pass and optimization step
+            optimizer.zero_grad()
+            self.manual_backward(loss)
+            optimizer.step()
+
         total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1) // self.stride
-        )
+            seq_len - (self.window_size + self.prediction_distance + 1)
+        ) // self.stride
         avg_loss = total_loss / total_steps
         self.log("train_loss", avg_loss, sync_dist=True)
         return avg_loss
@@ -85,8 +90,6 @@ class MambaModel(pl.LightningModule):
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
-            # Extract source and target sequences
-
             src = batch[:, i : i + self.window_size, :]
             tgt = batch[
                 :,
@@ -105,8 +108,8 @@ class MambaModel(pl.LightningModule):
             total_loss += loss
 
         total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1) // self.stride
-        )
+            seq_len - (self.window_size + self.prediction_distance + 1)
+        ) // self.stride
 
         avg_loss = total_loss / total_steps
         self.log("val_loss", avg_loss, sync_dist=True)
@@ -114,3 +117,8 @@ class MambaModel(pl.LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
+
+    def predict(self, input):
+        self.model.eval()
+        with torch.no_grad():
+            return self.model(input)
