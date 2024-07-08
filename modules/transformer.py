@@ -20,7 +20,6 @@ class TransformerModule(pl.LightningModule):
         name,
     ):
         super().__init__()
-        self.automatic_optimization = False
         self.save_hyperparameters()
         self.model = torch.nn.Transformer(
             d_model=d_model,
@@ -45,9 +44,6 @@ class TransformerModule(pl.LightningModule):
         batch_size, seq_len, input_size = batch.size()
         total_loss = 0.0
 
-        # Manually optimizing
-        optimizer = self.optimizers()
-
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
@@ -61,17 +57,10 @@ class TransformerModule(pl.LightningModule):
                 :,
             ]
 
-            # Forward pass
             output = self(src, tgt)
 
-            # Compute loss
             loss = torch.nn.functional.mse_loss(output, tgt)
             total_loss += loss
-
-            # Backward pass and optimization step
-            optimizer.zero_grad()
-            self.manual_backward(loss)
-            optimizer.step()
 
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)
@@ -113,5 +102,4 @@ class TransformerModule(pl.LightningModule):
         return avg_loss
 
     def configure_optimizers(self):
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.lr)
-        return optimizer
+        return torch.optim.Adam(self.parameters(), lr=self.lr)

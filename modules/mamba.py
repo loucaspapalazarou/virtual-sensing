@@ -40,9 +40,6 @@ class MambaModule(pl.LightningModule):
         batch_size, seq_len, input_size = batch.size()
         total_loss = 0.0
 
-        # Manually optimizing
-        optimizer = self.optimizers()
-
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
@@ -62,11 +59,6 @@ class MambaModule(pl.LightningModule):
             # Compute loss
             loss = torch.nn.functional.mse_loss(output, tgt)
             total_loss += loss
-
-            # Backward pass and optimization step
-            optimizer.zero_grad()
-            self.manual_backward(loss)
-            optimizer.step()
 
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)
