@@ -56,6 +56,7 @@ def main():
                 stride=params["stride"],
                 window_size=params["window_size"],
                 prediction_distance=params["prediction_distance"],
+                target_feature_indices=params["target_feature_indices"],
             )
         case "mamba":
             model = MambaModule(
@@ -70,6 +71,7 @@ def main():
                 stride=params["stride"],
                 window_size=params["window_size"],
                 prediction_distance=params["prediction_distance"],
+                target_feature_indices=params["target_feature_indices"],
             )
         case _:
             raise ValueError("Invalid model")

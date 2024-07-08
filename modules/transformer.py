@@ -1,8 +1,6 @@
 import pytorch_lightning as pl
 import torch
 
-# TODO: Add prediction
-
 
 class TransformerModule(pl.LightningModule):
 
@@ -17,6 +15,7 @@ class TransformerModule(pl.LightningModule):
         stride,
         window_size,
         prediction_distance,
+        target_feature_indices,
         name,
     ):
         super().__init__()
@@ -36,6 +35,11 @@ class TransformerModule(pl.LightningModule):
         self.stride = stride
         self.window_size = window_size
         self.prediction_distance = prediction_distance
+        self.target_feature_indices = target_feature_indices
+
+        assert all(
+            0 <= idx < d_model for idx in target_feature_indices
+        ), "All target feature indices must be valid indices within d_model."
 
     def forward(self, src, tgt):
         return self.model(src, tgt)
@@ -59,7 +63,11 @@ class TransformerModule(pl.LightningModule):
 
             output = self(src, tgt)
 
-            loss = torch.nn.functional.mse_loss(output, tgt)
+            # Extract the target feature indices from both output and tgt
+            output_target = output[:, :, self.target_feature_indices]
+            tgt_target = tgt[:, :, self.target_feature_indices]
+
+            loss = torch.nn.functional.mse_loss(output_target, tgt_target)
             total_loss += loss
 
         total_steps = (
@@ -89,8 +97,12 @@ class TransformerModule(pl.LightningModule):
             # Forward pass
             output = self(src, tgt)
 
+            # Extract the target feature indices from both output and tgt
+            output_target = output[:, :, self.target_feature_indices]
+            tgt_target = tgt[:, :, self.target_feature_indices]
+
             # Compute loss
-            loss = torch.nn.functional.mse_loss(output, tgt)
+            loss = torch.nn.functional.mse_loss(output_target, tgt_target)
             total_loss += loss
 
         total_steps = (
@@ -103,3 +115,6 @@ class TransformerModule(pl.LightningModule):
 
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
+
+    def predict(self, input):
+        raise NotImplementedError()

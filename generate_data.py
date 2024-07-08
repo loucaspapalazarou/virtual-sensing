@@ -34,9 +34,10 @@ def run_program_in_conda_env(env_name, program, script, iterations, args):
 
 # Example usage
 if __name__ == "__main__":
+    iterations = 100
+    num_envs = 12
     env_name = "rlgpu"
     program = "python"
     script = "/mnt/BigHD_1/loucas/IsaacGymEnvs/isaacgymenvs/train.py"
-    args = "task=FrankaCubePush headless=True checkpoint=/mnt/BigHD_1/loucas/IsaacGymEnvs/isaacgymenvs/runs/FrankaCubePush_09-10-42-48/nn/last_FrankaCubePush_ep_6500_rew_389.39374.pth test=True num_envs=4096"
-    iterations = 100
+    args = f"task=FrankaCubePush headless=True checkpoint=/mnt/BigHD_1/loucas/IsaacGymEnvs/isaacgymenvs/runs/FrankaCubePush_09-10-42-48/nn/last_FrankaCubePush_ep_6500_rew_389.39374.pth test=True num_envs={num_envs}"
     run_program_in_conda_env(env_name, program, script, iterations, args)
