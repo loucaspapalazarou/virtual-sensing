@@ -1,0 +1,1 @@
+python train.py task=FrankaCubePush headless=True checkpoint=/mnt/BigHD_1/loucas/IsaacGymEnvs/isaacgymenvs/runs/FrankaCubePush_09-10-42-48/nn/last_FrankaCubePush_ep_6500_rew_389.39374.pth test=True num_envs=4096

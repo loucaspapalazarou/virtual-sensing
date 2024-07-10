@@ -24,9 +24,9 @@ def run_program_in_conda_env(env_name, program, script, iterations, args):
             )
 
             # Print the output and error (if any)
-            # print("Output:\n", result.stdout)
-            # if result.stderr:
-            #     print("Error:\n", result.stderr)
+            print("Output:\n", result.stdout)
+            if result.stderr:
+                print("Error:\n", result.stderr)
 
         except subprocess.CalledProcessError as e:
             print(f"An error occurred while running the program: {e}")
@@ -35,7 +35,7 @@ def run_program_in_conda_env(env_name, program, script, iterations, args):
 # Example usage
 if __name__ == "__main__":
     iterations = 100
-    num_envs = 12
+    num_envs = 1024
     env_name = "rlgpu"
     program = "python"
     script = "/mnt/BigHD_1/loucas/IsaacGymEnvs/isaacgymenvs/train.py"

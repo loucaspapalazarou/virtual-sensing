@@ -1,6 +1,7 @@
 import torch
-from mamba_ssm import Mamba, Mamba2  # type: ignore
+from mamba_ssm import Mamba  # type: ignore
 import pytorch_lightning as pl
+from resnet import ResNetBlock
 
 
 class MambaModule(pl.LightningModule):
@@ -16,16 +17,18 @@ class MambaModule(pl.LightningModule):
         window_size,
         prediction_distance,
         target_feature_indices,
+        resnet_features,
         name,
     ):
         super().__init__()
-
+        self.save_hyperparameters()
         self.model = Mamba(
             d_model=d_model,
             d_state=d_state,
             d_conv=d_conv,
             expand=expand,
         )
+        self.resnet = ResNetBlock(out_features_per_image=resnet_features)
         self.name = name
         self.automatic_optimization = False
         self.lr = lr
@@ -37,7 +40,6 @@ class MambaModule(pl.LightningModule):
         assert all(
             0 <= idx < d_model for idx in target_feature_indices
         ), "All target feature indices must be valid indices within d_model."
-        self.save_hyperparameters()
 
     def forward(self, src):
         return self.model(src)

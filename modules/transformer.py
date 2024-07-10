@@ -1,5 +1,6 @@
 import pytorch_lightning as pl
 import torch
+from resnet import ResNetBlock
 
 
 class TransformerModule(pl.LightningModule):
@@ -16,6 +17,7 @@ class TransformerModule(pl.LightningModule):
         window_size,
         prediction_distance,
         target_feature_indices,
+        resnet_features,
         name,
     ):
         super().__init__()
@@ -28,6 +30,7 @@ class TransformerModule(pl.LightningModule):
             num_decoder_layers=num_decoder_layers,
             dim_feedforward=dim_feedforward,
         )
+        self.resnet = ResNetBlock(out_features_per_image=resnet_features)
         self.name = name
         self.d_model = d_model
         self.nhead = nhead

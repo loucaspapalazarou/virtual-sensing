@@ -3,6 +3,17 @@ import torch
 from torch.utils.data import Dataset
 import pytorch_lightning as pl
 from torch.utils.data import DataLoader, random_split, Subset
+from torchvision import transforms
+
+
+def _preprocess_image_tensor(t: torch.Tensor) -> torch.Tensor:
+    t = t.permute(2, 0, 1)
+    t = t[:3, :, :].float()
+    preprocess = torch.nn.Sequential(
+        transforms.Resize(256),
+        transforms.CenterCrop(224),
+    )
+    return preprocess(t)
 
 
 class FrankaDataset(Dataset):
@@ -15,21 +26,39 @@ class FrankaDataset(Dataset):
 
         # Populate the index_map
         for file_idx, filename in enumerate(self.file_list):
-            _, num_envs, _ = torch.load(filename).size()
+            _, num_envs, _ = torch.load(filename)["sensor_data"].size()
             for env_idx in range(num_envs):
                 self.index_map.append((file_idx, env_idx))
 
-    def __getitem__(self, index):
+    def __getitem__(self, index) -> dict:
         file_idx, env_idx = self.index_map[index]
         t = torch.load(self.file_list[file_idx])
-        data = t[:, env_idx]
 
-        # Make feature dim even if it's not already
-        timesteps, features = data.size()
-        if features % 2 != 0:
-            data = torch.cat((data, torch.zeros(timesteps, 1).to(data.device)), dim=1)
+        sensor_data = t["sensor_data"][:, env_idx]
 
-        return data[0 : min(self.episode_length, timesteps), :]
+        # image data shape torch.Size([300, 12, 3, 256, 256, 4])
+        # becomes torch.Size([300, 3, 256, 256, 4]) after single-ing out an env
+        camera_data = t["camera_data"][:, env_idx]
+        processed_camera_data = torch.empty((300, 3, 3, 224, 224))
+        for timestep in range(camera_data.shape[0]):  # Loop through each timestep
+            for i in range(camera_data.shape[1]):  # Loop through each image
+                image = camera_data[timestep, i]  # Extract the image
+                processed_image = _preprocess_image_tensor(image)  # Apply preprocessing
+                processed_camera_data[timestep, i] = (
+                    processed_image  # Store in the output tensor
+                )
+
+        # Determine the appropriate episode length
+        timesteps = min(self.episode_length, sensor_data.shape[0])
+
+        # Truncate the sensor data and processed camera data to the episode length
+        truncated_sensor_data = sensor_data[:timesteps]
+        truncated_camera_data = processed_camera_data[:timesteps]
+
+        return {
+            "sensor_data": truncated_sensor_data,
+            "camera_data": truncated_camera_data,
+        }
 
     def __len__(self):
         return len(self.index_map)
@@ -74,7 +103,7 @@ class FrankaDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
         )
 
-    def get_dim(self):
-        with open(os.path.join(self.data_dir, "dim")) as f:
-            dim = int(f.read())
-            return dim if dim % 2 == 0 else dim + 1
+    # def get_dim(self):
+    #     with open(os.path.join(self.data_dir, "dim")) as f:
+    #         dim = int(f.read())
+    #         return dim if dim % 2 == 0 else dim + 1
