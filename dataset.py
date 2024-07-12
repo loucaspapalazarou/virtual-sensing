@@ -24,11 +24,14 @@ class FrankaDataset(Dataset):
         self.index_map = []  # maps array index to (file, env)
         self.episode_length = episode_length
 
-        # Populate the index_map
-        for file_idx, filename in enumerate(self.file_list):
-            _, num_envs, _ = torch.load(filename)["sensor_data"].size()
-            for env_idx in range(num_envs):
-                self.index_map.append((file_idx, env_idx))
+        if self.file_list:
+            # Load the first file to determine the number of environments
+            _, num_envs, _ = torch.load(self.file_list[0])["sensor_data"].size()
+
+            # Populate the index_map
+            for file_idx, filename in enumerate(self.file_list):
+                for env_idx in range(num_envs):
+                    self.index_map.append((file_idx, env_idx))
 
     def __getitem__(self, index) -> dict:
         file_idx, env_idx = self.index_map[index]
@@ -103,7 +106,6 @@ class FrankaDataModule(pl.LightningDataModule):
             num_workers=self.num_workers,
         )
 
-    # def get_dim(self):
-    #     with open(os.path.join(self.data_dir, "dim")) as f:
-    #         dim = int(f.read())
-    #         return dim if dim % 2 == 0 else dim + 1
+    def get_num_sensor_features(self):
+        with open(os.path.join(self.data_dir, "dim")) as f:
+            return int(f.read())

@@ -1,6 +1,6 @@
 {
-  "data_dir": "/mnt/BigHD_1/loucas/data/",
-  "data_portion": 0.4,
+  "data_dir": "/mnt/BigHD_1/loucas/data-w-camera/",
+  "data_portion": 0.5,
   "episode_length": 200,
   "batch_size": 32,
   "num_workers": 0,
@@ -11,6 +11,7 @@
   "stride": 1,
   "log_every_n_steps": 10,
   "target_feature_indices": [1, 2, 3],
+  "resnet_features": 15,
   "transformer": {
     "num_encoder_layers": 2,
     "num_decoder_layers": 2,

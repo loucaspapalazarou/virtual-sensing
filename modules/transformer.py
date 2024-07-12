@@ -1,10 +1,10 @@
 import pytorch_lightning as pl
 import torch
-from resnet import ResNetBlock
+from torch import nn
+from modules.resnet import ResNetBlock
 
 
 class TransformerModule(pl.LightningModule):
-
     def __init__(
         self,
         d_model,
@@ -22,7 +22,7 @@ class TransformerModule(pl.LightningModule):
     ):
         super().__init__()
         self.save_hyperparameters()
-        self.model = torch.nn.Transformer(
+        self.model = nn.Transformer(
             d_model=d_model,
             nhead=nhead,
             batch_first=True,
@@ -47,15 +47,28 @@ class TransformerModule(pl.LightningModule):
     def forward(self, src, tgt):
         return self.model(src, tgt)
 
+    def process_data(self, sensor_data, camera_data):
+        # Pass the entire camera data with timesteps through the ResNet block
+        resnet_features = self.resnet(camera_data)
+        # Concatenate along the feature dimension
+        combined_data = torch.cat(
+            (sensor_data, resnet_features), dim=2
+        )  # Concatenate along the feature dimension
+        return combined_data
+
     def training_step(self, batch, batch_idx):
-        batch_size, seq_len, input_size = batch.size()
+        sensor_data = batch["sensor_data"]
+        camera_data = batch["camera_data"]
+
+        combined_data = self.process_data(sensor_data, camera_data)
+        batch_size, seq_len, input_size = combined_data.size()
         total_loss = 0.0
 
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
-            src = batch[:, i : i + self.window_size, :]
-            tgt = batch[
+            src = combined_data[:, i : i + self.window_size, :]
+            tgt = combined_data[
                 :,
                 i
                 + self.prediction_distance : i
@@ -70,7 +83,7 @@ class TransformerModule(pl.LightningModule):
             output_target = output[:, :, self.target_feature_indices]
             tgt_target = tgt[:, :, self.target_feature_indices]
 
-            loss = torch.nn.functional.mse_loss(output_target, tgt_target)
+            loss = nn.functional.mse_loss(output_target, tgt_target)
             total_loss += loss
 
         total_steps = (
@@ -81,14 +94,18 @@ class TransformerModule(pl.LightningModule):
         return avg_loss
 
     def validation_step(self, batch, batch_idx):
-        batch_size, seq_len, input_size = batch.size()
+        sensor_data = batch["sensor_data"]
+        camera_data = batch["camera_data"]
+
+        combined_data = self.process_data(sensor_data, camera_data)
+        batch_size, seq_len, input_size = combined_data.size()
         total_loss = 0.0
 
         for i in range(
             0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
         ):
-            src = batch[:, i : i + self.window_size, :]
-            tgt = batch[
+            src = combined_data[:, i : i + self.window_size, :]
+            tgt = combined_data[
                 :,
                 i
                 + self.prediction_distance : i
@@ -105,7 +122,7 @@ class TransformerModule(pl.LightningModule):
             tgt_target = tgt[:, :, self.target_feature_indices]
 
             # Compute loss
-            loss = torch.nn.functional.mse_loss(output_target, tgt_target)
+            loss = nn.functional.mse_loss(output_target, tgt_target)
             total_loss += loss
 
         total_steps = (

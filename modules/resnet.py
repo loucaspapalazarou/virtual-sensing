@@ -14,14 +14,30 @@ class ResNetBlock(nn.Module):
         self.resnet = resnet
 
     def forward(self, x):
-        # Assuming x is of shape [batch_size, 3, 3, 224, 224]
-        batch_size, num_images, channels, height, width = x.shape
+        # Assuming x is of shape [batch_size, num_timesteps, num_images, 3, 224, 224]
+        batch_size, num_timesteps, num_images, channels, height, width = x.shape
         outputs = []
-        for i in range(num_images):
-            image = x[
-                :, i, :, :, :
-            ]  # Extract each image of shape [batch_size, 3, 224, 224]
-            output = self.resnet(image)  # Pass through ResNet
-            outputs.append(output)
-        # Concatenate the outputs along the feature dimension
-        return torch.cat(outputs, dim=1)
+        for t in range(num_timesteps):
+            timestep_outputs = []
+            for i in range(num_images):
+                image = x[
+                    :, t, i, :, :, :
+                ]  # Extract each image of shape [batch_size, 3, 224, 224]
+                output = self.resnet(image)  # Pass through ResNet
+                timestep_outputs.append(output)
+            # Concatenate the outputs of all images for the current timestep
+            timestep_outputs = torch.cat(timestep_outputs, dim=1)
+            outputs.append(timestep_outputs)
+        # Stack the outputs to retain the timesteps dimension
+        return torch.stack(outputs, dim=1)
+
+
+# Example usage
+if __name__ == "__main__":
+    model = ResNetBlock(out_features_per_image=15)
+    # Dummy input of shape [batch_size, num_timesteps, num_images, channels, height, width]
+    dummy_input = torch.randn(8, 5, 3, 3, 224, 224)
+    output = model(dummy_input)
+    print(
+        output.shape
+    )  # The output shape will be [batch_size, num_timesteps, concatenated_features]

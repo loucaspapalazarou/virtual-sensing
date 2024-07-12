@@ -16,7 +16,9 @@ def run_program_in_conda_env(env_name, program, script, iterations, args):
     for _ in tqdm(range(iterations)):
         try:
             # Build the command to activate the conda environment and run the program
-            command = f"conda run -n {env_name} {program} {script} {args}"
+            command = (
+                f"conda run --no-capture-output -n {env_name} {program} {script} {args}"
+            )
 
             # Execute the command
             result = subprocess.run(
@@ -34,8 +36,8 @@ def run_program_in_conda_env(env_name, program, script, iterations, args):
 
 # Example usage
 if __name__ == "__main__":
-    iterations = 100
-    num_envs = 1024
+    iterations = 50
+    num_envs = 4
     env_name = "rlgpu"
     program = "python"
     script = "/mnt/BigHD_1/loucas/IsaacGymEnvs/isaacgymenvs/train.py"
