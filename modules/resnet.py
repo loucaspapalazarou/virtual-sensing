@@ -6,7 +6,9 @@ from torch import nn
 class ResNetBlock(nn.Module):
     def __init__(self, out_features_per_image) -> None:
         super().__init__()
-        resnet = torchvision.models.resnet18(weights="IMAGENET1K_V1")
+        # resnet = torchvision.models.resnet18(weights="IMAGENET1K_V1")
+        resnet = torchvision.models.resnet18(weights=None)
+        resnet.load_state_dict(torch.load("/work/tc064/tc064/s2567498/msc-diss/resnet18-f37072fd.pth"))
         for param in resnet.parameters():
             param.requires_grad = False
         num_ftrs = resnet.fc.in_features
@@ -30,14 +32,3 @@ class ResNetBlock(nn.Module):
             outputs.append(timestep_outputs)
         # Stack the outputs to retain the timesteps dimension
         return torch.stack(outputs, dim=1)
-
-
-# Example usage
-if __name__ == "__main__":
-    model = ResNetBlock(out_features_per_image=15)
-    # Dummy input of shape [batch_size, num_timesteps, num_images, channels, height, width]
-    dummy_input = torch.randn(8, 5, 3, 3, 224, 224)
-    output = model(dummy_input)
-    print(
-        output.shape
-    )  # The output shape will be [batch_size, num_timesteps, concatenated_features]

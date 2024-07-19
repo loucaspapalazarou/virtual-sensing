@@ -1,4 +1,5 @@
 import pytorch_lightning as pl
+from lightning.pytorch import loggers as pl_loggers
 from dataset import FrankaDataModule
 import argparse
 import json
@@ -80,12 +81,20 @@ def main():
             )
         case _:
             raise ValueError("Invalid model")
+    
+    
+    tb_logger = pl_loggers.TensorBoardLogger(save_dir="./lightning_logs", name=f"{args.model}")
 
     trainer = pl.Trainer(
+        logger=tb_logger,
         max_epochs=params["max_epochs"],
         log_every_n_steps=params["log_every_n_steps"],
         fast_dev_run=args.fast_dev_run,
         val_check_interval=0.5,
+        accelerator="gpu",
+        devices=4,  # Use 4 GPUs
+        num_nodes=1,  # Use 1 node
+        strategy="ddp"  # Use Distributed Data Parallel strategy
     )
 
     trainer.fit(model, data_module)

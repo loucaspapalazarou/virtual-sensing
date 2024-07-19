@@ -1,26 +1,26 @@
 {
-  "data_dir": "/mnt/BigHD_1/loucas/data-w-camera/",
+  "data_dir": "/work/tc064/tc064/s2567498/data-w-camera-reduced/",
   "data_portion": 1.0,
-  "episode_length": 200,
-  "batch_size": 4,
+  "episode_length": 100,
+  "batch_size": 16,
   "num_workers": 0,
-  "max_epochs": 5,
-  "prediction_distance": 1,
-  "window_size": 32,
+  "max_epochs": 10,
+  "prediction_distance": 10,
+  "window_size": 20,
   "lr": 0.001,
   "stride": 1,
   "log_every_n_steps": 5,
-  "target_feature_indices": [1, 2, 3],
+  "target_feature_indices": [7, 8, 9],
   "resnet_features": 15,
   "transformer": {
-    "num_encoder_layers": 2,
-    "num_decoder_layers": 2,
-    "nhead": 2,
-    "dim_feedforward": 64
+    "num_encoder_layers": 3,
+    "num_decoder_layers": 3,
+    "nhead": 20,
+    "dim_feedforward": 128
   },
   "mamba": {
-    "d_state": 16,
-    "d_conv": 14,
-    "expand": 2
+    "d_state": 24,
+    "d_conv": 20,
+    "expand": 3
   }
 }

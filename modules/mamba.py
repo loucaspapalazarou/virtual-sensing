@@ -118,6 +118,7 @@ class MambaModule(pl.LightningModule):
 
             # Extract the target feature indices from both output and tgt
             output_target = output[:, :, self.target_feature_indices]
+            print(output_target.shape)
             tgt_target = tgt[:, :, self.target_feature_indices]
 
             # Compute loss
