@@ -2,6 +2,7 @@ import pytorch_lightning as pl
 import torch
 from torch import nn
 from modules.resnet import ResNetBlock
+from modules.utils import combine_sensor_and_camera_data
 
 
 class TransformerModule(pl.LightningModule):
@@ -47,20 +48,13 @@ class TransformerModule(pl.LightningModule):
     def forward(self, src, tgt):
         return self.model(src, tgt)
 
-    def process_data(self, sensor_data, camera_data):
-        # Pass the entire camera data with timesteps through the ResNet block
-        resnet_features = self.resnet(camera_data)
-        # Concatenate along the feature dimension
-        combined_data = torch.cat(
-            (sensor_data, resnet_features), dim=2
-        )  # Concatenate along the feature dimension
-        return combined_data
-
     def training_step(self, batch, batch_idx):
         sensor_data = batch["sensor_data"]
         camera_data = batch["camera_data"]
 
-        combined_data = self.process_data(sensor_data, camera_data)
+        combined_data = combine_sensor_and_camera_data(
+            self.resnet, sensor_data, camera_data
+        )
         batch_size, seq_len, input_size = combined_data.size()
         total_loss = 0.0
 
