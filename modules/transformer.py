@@ -91,7 +91,7 @@ class TransformerModule(pl.LightningModule):
         sensor_data = batch["sensor_data"]
         camera_data = batch["camera_data"]
 
-        combined_data = self.process_data(sensor_data, camera_data)
+        combined_data = combine_sensor_and_camera_data(self.resnet, sensor_data, camera_data)
         batch_size, seq_len, input_size = combined_data.size()
         total_loss = 0.0
 
