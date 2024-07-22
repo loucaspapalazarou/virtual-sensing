@@ -17,16 +17,18 @@ def _preprocess_image_tensor(t: torch.Tensor) -> torch.Tensor:
 
 
 class FrankaDataset(Dataset):
-    def __init__(self, data_dir, episode_length):
+    def __init__(self, data_dir, episode_length, use_cpu):
         self.file_list = [
             os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pt")
         ]
         self.index_map = []  # maps array index to (file, env)
         self.episode_length = episode_length
+        self.use_cpu = use_cpu
+        self.data_dir = data_dir
 
         if self.file_list:
             # Load the first file to determine the number of environments
-            _, num_envs, _ = torch.load(self.file_list[0])["sensor_data"].size()
+            num_envs = self.get_num_envs()
 
             # Populate the index_map
             for file_idx, filename in enumerate(self.file_list):
@@ -35,7 +37,10 @@ class FrankaDataset(Dataset):
 
     def __getitem__(self, index) -> dict:
         file_idx, env_idx = self.index_map[index]
-        t = torch.load(self.file_list[file_idx])
+        if self.use_cpu:
+            t = torch.load(self.file_list[file_idx], map_location=torch.device("cpu"))
+        else:
+            t = torch.load(self.file_list[file_idx])
 
         sensor_data = t["sensor_data"][:, env_idx]
 
@@ -66,10 +71,22 @@ class FrankaDataset(Dataset):
     def __len__(self):
         return len(self.index_map)
 
+    def get_num_envs(self):
+        with open(os.path.join(self.data_dir, "envs")) as f:
+            return int(f.read())
+
 
 class FrankaDataModule(pl.LightningDataModule):
 
-    def __init__(self, data_dir, batch_size, num_workers, data_portion, episode_length):
+    def __init__(
+        self,
+        data_dir,
+        batch_size,
+        num_workers,
+        data_portion,
+        episode_length,
+        use_cpu=False,
+    ):
         assert 0 < data_portion <= 1.0
         super().__init__()
         self.save_hyperparameters()
@@ -78,10 +95,13 @@ class FrankaDataModule(pl.LightningDataModule):
         self.num_workers = num_workers
         self.data_portion = data_portion
         self.epidsode_length = episode_length
+        self.use_cpu = use_cpu
 
     def setup(self, stage=None):
         dataset = FrankaDataset(
-            data_dir=self.data_dir, episode_length=self.epidsode_length
+            data_dir=self.data_dir,
+            episode_length=self.epidsode_length,
+            use_cpu=self.use_cpu,
         )
         data_points = int(len(dataset) * self.data_portion)
         print(

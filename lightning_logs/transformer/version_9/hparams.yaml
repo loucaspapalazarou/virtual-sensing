@@ -1,6 +1,7 @@
 batch_size: 8
 d_model: 80
 data_dir: /work/tc064/tc064/s2567498/data-w-camera/
+resnet_checkpoint: /work/tc064/tc064/s2567498/resnet18-f37072fd.pth
 data_portion: 1.0
 dim_feedforward: 64
 episode_length: 200

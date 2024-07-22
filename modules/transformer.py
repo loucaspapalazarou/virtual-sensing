@@ -49,7 +49,8 @@ class TransformerModule(pl.LightningModule):
         ), "All target feature indices must be valid indices within d_model."
 
     def forward(self, src, tgt):
-        return self.model(src, tgt)
+        output = self.model(src, tgt)
+        return nn.functional.tanh(output)
 
     def training_step(self, batch, batch_idx):
         sensor_data = batch["sensor_data"]
@@ -135,5 +136,44 @@ class TransformerModule(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
-    def predict(self, input):
-        raise NotImplementedError()
+    def predict(self, batch):
+        self.eval()  # Set the model to evaluation mode
+        with torch.no_grad():  # Disable gradient calculation
+            sensor_data = batch["sensor_data"]
+            camera_data = batch["camera_data"]
+
+            combined_data = combine_sensor_and_camera_data(
+                self.resnet, sensor_data, camera_data
+            )
+
+            batch_size, seq_len, input_size = combined_data.size()
+
+            # Determine the starting index for the last window
+            start_index = seq_len - self.window_size
+
+            # Ensure the start index is non-negative
+            if start_index < 0:
+                raise ValueError(
+                    "The sequence length is too short for the given window size and prediction distance."
+                )
+
+            # Prepare the source tensor for the last window
+            src = combined_data[:, start_index : start_index + self.window_size, :]
+
+            # Create a target tensor of zeros with the expected shape
+            tgt = torch.zeros_like(src)
+
+            # Create a mask for the tgt tensor
+            tgt_mask = self.model.generate_square_subsequent_mask(self.window_size).to(
+                src.device
+            )
+
+            # Forward pass
+            output = self.model(src, tgt, tgt_mask=tgt_mask)
+
+            # Extract the target feature indices from the output
+            output_target = output[
+                :, self.prediction_distance :, self.target_feature_indices
+            ]
+
+            return output_target
