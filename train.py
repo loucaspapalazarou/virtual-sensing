@@ -15,7 +15,7 @@ def main():
         type=str,
         required=True,
         help="The name of the model you want to train",
-        choices=["transformer", "mamba", "mamba2"],
+        choices=["transformer", "mamba"],
     )
     parser.add_argument(
         "--config-file",
@@ -84,13 +84,15 @@ def main():
             }
         case _:
             raise ValueError("Invalid model")
-    
+
     if args.checkpoint:
         model = model_class.load_from_checkpoint(args.checkpoint, **model_params)
     else:
         model = model_class(**model_params)
-    
-    tb_logger = pl_loggers.TensorBoardLogger(save_dir="./lightning_logs", name=f"{args.model}")
+
+    tb_logger = pl_loggers.TensorBoardLogger(
+        save_dir="./lightning_logs", name=f"{args.model}"
+    )
 
     trainer = pl.Trainer(
         logger=tb_logger,
@@ -101,7 +103,7 @@ def main():
         accelerator="gpu",
         devices=2,
         num_nodes=1,
-        strategy="ddp"
+        strategy="ddp",
     )
 
     trainer.fit(model, data_module)

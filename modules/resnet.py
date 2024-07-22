@@ -8,7 +8,9 @@ class ResNetBlock(nn.Module):
         super().__init__()
         # resnet = torchvision.models.resnet18(weights="IMAGENET1K_V1")
         resnet = torchvision.models.resnet18(weights=None)
-        resnet.load_state_dict(torch.load("/work/tc064/tc064/s2567498/msc-diss/resnet18-f37072fd.pth"))
+        resnet.load_state_dict(
+            torch.load("/work/tc064/tc064/s2567498/msc-diss/resnet18-f37072fd.pth")
+        )
         for param in resnet.parameters():
             param.requires_grad = False
         num_ftrs = resnet.fc.in_features
