@@ -19,6 +19,7 @@ class TransformerModule(pl.LightningModule):
         prediction_distance,
         target_feature_indices,
         resnet_features,
+        resnet_checkpoint,
         name,
     ):
         super().__init__()
@@ -31,7 +32,9 @@ class TransformerModule(pl.LightningModule):
             num_decoder_layers=num_decoder_layers,
             dim_feedforward=dim_feedforward,
         )
-        self.resnet = ResNetBlock(out_features_per_image=resnet_features)
+        self.resnet = ResNetBlock(
+            out_features_per_image=resnet_features, resnet_checkpoint=resnet_checkpoint
+        )
         self.name = name
         self.d_model = d_model
         self.nhead = nhead

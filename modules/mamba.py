@@ -19,6 +19,7 @@ class MambaModule(pl.LightningModule):
         prediction_distance,
         target_feature_indices,
         resnet_features,
+        resnet_checkpoint,
         name,
     ):
         super().__init__()
@@ -29,7 +30,9 @@ class MambaModule(pl.LightningModule):
             d_conv=d_conv,
             expand=expand,
         )
-        self.resnet = ResNetBlock(out_features_per_image=resnet_features)
+        self.resnet = ResNetBlock(
+            out_features_per_image=resnet_features, resnet_checkpoint=resnet_checkpoint
+        )
         self.name = name
         self.automatic_optimization = False
         self.lr = lr

@@ -1,9 +1,2 @@
-- Camera
-- Collect new data
-- New loss function for feature isolation
 - predict.py
-- CNN for the images
-- Handle the new datset
-- Train new models
-- Try cirrus
 - INFERENCE IN TRANSFORMER (use only decoder/encoder?)

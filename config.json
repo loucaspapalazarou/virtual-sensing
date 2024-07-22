@@ -1,5 +1,6 @@
 {
   "data_dir": "/work/tc064/tc064/s2567498/data-w-camera/",
+  "resnet_checkpoint":"/work/tc064/tc064/s2567498/resnet18-f37072fd.pth",
   "data_portion": 1.0,
   "episode_length": 200,
   "batch_size": 8,

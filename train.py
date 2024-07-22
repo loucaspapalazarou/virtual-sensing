@@ -66,6 +66,7 @@ def main():
                 "prediction_distance": params["prediction_distance"],
                 "target_feature_indices": params["target_feature_indices"],
                 "resnet_features": params["resnet_features"],
+                "resnet_checkpoint": params["resnet_checkpoint"],
             }
         case "mamba":
             model_class = MambaModule
@@ -81,6 +82,7 @@ def main():
                 "prediction_distance": params["prediction_distance"],
                 "target_feature_indices": params["target_feature_indices"],
                 "resnet_features": params["resnet_features"],
+                "resnet_checkpoint": params["resnet_checkpoint"],
             }
         case _:
             raise ValueError("Invalid model")
