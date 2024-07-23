@@ -14,4 +14,10 @@ Figures of signals from sensors 7,8,9 (or whtever target is) and then figures fr
 
 Say that there are a lot of approaches (seq2seq etc) justify why we went with our specific ones
 
-corssentropy loss?\
+corssentropy loss?
+
+- Principal component analysis (PCA) algorithm, add that inthe future work, curse of dimensionality
+
+- problem formalization in more detail, use letter notations and stuff like that
+
+- add baseline model? classifier?
