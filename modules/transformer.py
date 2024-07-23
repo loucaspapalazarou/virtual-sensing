@@ -137,6 +137,8 @@ class TransformerModule(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
     def predict(self, batch):
+        # TODO: Also add mask for target features
+
         self.eval()  # Set the model to evaluation mode
         with torch.no_grad():  # Disable gradient calculation
             sensor_data = batch["sensor_data"]
@@ -171,9 +173,4 @@ class TransformerModule(pl.LightningModule):
             # Forward pass
             output = self.model(src, tgt, tgt_mask=tgt_mask)
 
-            # Extract the target feature indices from the output
-            output_target = output[
-                :, self.prediction_distance :, self.target_feature_indices
-            ]
-
-            return output_target
+            return output[:, -self.prediction_distance :, self.target_feature_indices]
