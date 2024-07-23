@@ -135,5 +135,33 @@ class MambaModule(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
-    def predict(self, input):
-        raise NotImplementedError()
+    def predict(self, batch):
+        # TODO: Also add mask for target features
+
+        self.eval()  # Set the model to evaluation mode
+        with torch.no_grad():  # Disable gradient calculation
+            sensor_data = batch["sensor_data"]
+            camera_data = batch["camera_data"]
+
+            combined_data = combine_sensor_and_camera_data(
+                self.resnet, sensor_data, camera_data
+            )
+
+            batch_size, seq_len, input_size = combined_data.size()
+
+            # Determine the starting index for the last window
+            start_index = seq_len - self.window_size
+
+            # Ensure the start index is non-negative
+            if start_index < 0:
+                raise ValueError(
+                    "The sequence length is too short for the given window size and prediction distance."
+                )
+
+            # Prepare the source tensor for the last window
+            src = combined_data[:, start_index : start_index + self.window_size, :]
+
+            # Forward pass
+            output = self.model(src)
+
+            return output[:, -self.prediction_distance :, self.target_feature_indices]
