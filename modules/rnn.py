@@ -1,14 +1,13 @@
-from mamba_ssm import Mamba  # type: ignore
+from torch import nn
 from modules.base import BaseModelModule
 
 
-class MambaModule(BaseModelModule):
+class RNNModule(BaseModelModule):
     def __init__(
         self,
         d_model,
-        d_state,
-        d_conv,
-        expand,
+        rnn_hidden_size,
+        num_layers,
         lr,
         stride,
         window_size,
@@ -28,12 +27,13 @@ class MambaModule(BaseModelModule):
             resnet_checkpoint,
             name,
         )
-        self.model = Mamba(
-            d_model=d_model,
-            d_state=d_state,
-            d_conv=d_conv,
-            expand=expand,
+        self.model = nn.RNN(
+            input_size=d_model,
+            hidden_size=rnn_hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
         )
 
     def forward(self, src, tgt=None):
-        return self.model(src)
+        rnn_out, _ = self.model(src)
+        return rnn_out

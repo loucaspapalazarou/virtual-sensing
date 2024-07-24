@@ -6,6 +6,7 @@ import json
 
 from modules.transformer import TransformerModule
 from modules.mamba import MambaModule
+from modules.rnn import RNNModule  # Assuming you save the RNN module in modules/rnn.py
 
 
 def main():
@@ -15,7 +16,7 @@ def main():
         type=str,
         required=True,
         help="The name of the model you want to train",
-        choices=["transformer", "mamba"],
+        choices=["transformer", "mamba", "rnn"],
     )
     parser.add_argument(
         "--config-file",
@@ -50,42 +51,44 @@ def main():
     # [num of sensor features] + [resnet_featues * 3] (3 images)
     data_dim = data_module.get_num_sensor_features() + (3 * params["resnet_features"])
 
-    match args.model:
-        case "transformer":
-            model_class = TransformerModule
-            model_params = {
-                "name": args.model,
-                "d_model": data_dim,
-                "nhead": params[args.model]["nhead"],
-                "num_encoder_layers": params[args.model]["num_encoder_layers"],
-                "num_decoder_layers": params[args.model]["num_decoder_layers"],
-                "dim_feedforward": params[args.model]["dim_feedforward"],
-                "lr": params["lr"],
-                "stride": params["stride"],
-                "window_size": params["window_size"],
-                "prediction_distance": params["prediction_distance"],
-                "target_feature_indices": params["target_feature_indices"],
-                "resnet_features": params["resnet_features"],
-                "resnet_checkpoint": params["resnet_checkpoint"],
-            }
-        case "mamba":
-            model_class = MambaModule
-            model_params = {
-                "name": args.model,
-                "d_model": data_dim,
-                "d_state": params[args.model]["d_state"],
-                "d_conv": params[args.model]["d_conv"],
-                "expand": params[args.model]["expand"],
-                "lr": params["lr"],
-                "stride": params["stride"],
-                "window_size": params["window_size"],
-                "prediction_distance": params["prediction_distance"],
-                "target_feature_indices": params["target_feature_indices"],
-                "resnet_features": params["resnet_features"],
-                "resnet_checkpoint": params["resnet_checkpoint"],
-            }
-        case _:
-            raise ValueError("Invalid model")
+    common_params = {
+        "name": args.model,
+        "d_model": data_dim,
+        "lr": params["lr"],
+        "stride": params["stride"],
+        "window_size": params["window_size"],
+        "prediction_distance": params["prediction_distance"],
+        "target_feature_indices": params["target_feature_indices"],
+        "resnet_features": params["resnet_features"],
+        "resnet_checkpoint": params["resnet_checkpoint"],
+    }
+
+    model_specific_params = {}
+    if args.model == "transformer":
+        model_class = TransformerModule
+        model_specific_params = {
+            "nhead": params[args.model]["nhead"],
+            "num_encoder_layers": params[args.model]["num_encoder_layers"],
+            "num_decoder_layers": params[args.model]["num_decoder_layers"],
+            "dim_feedforward": params[args.model]["dim_feedforward"],
+        }
+    elif args.model == "mamba":
+        model_class = MambaModule
+        model_specific_params = {
+            "d_state": params[args.model]["d_state"],
+            "d_conv": params[args.model]["d_conv"],
+            "expand": params[args.model]["expand"],
+        }
+    elif args.model == "rnn":
+        model_class = RNNModule
+        model_specific_params = {
+            "rnn_hidden_size": params[args.model]["rnn_hidden_size"],
+            "num_layers": params[args.model]["num_layers"],
+        }
+    else:
+        raise ValueError("Invalid model")
+
+    model_params = {**common_params, **model_specific_params}
 
     if args.checkpoint:
         model = model_class.load_from_checkpoint(args.checkpoint, **model_params)

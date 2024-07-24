@@ -23,5 +23,9 @@
     "d_state": 16,
     "d_conv": 4,
     "expand": 2
+  },
+  "rnn": {
+    "rnn_hidden_size": 128,
+    "num_layers": 2
   }
 }
