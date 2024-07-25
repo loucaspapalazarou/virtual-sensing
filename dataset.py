@@ -7,16 +7,6 @@ from torch.utils.data import DataLoader, random_split, Subset
 from torchvision import transforms
 
 
-def _preprocess_image_tensor(t: torch.Tensor) -> torch.Tensor:
-    # bring channels to front
-    t = t.permute(2, 0, 1)[:3, :, :]
-    preprocess = torch.nn.Sequential(
-        transforms.Resize(256),
-        transforms.CenterCrop(224),
-    )
-    return preprocess(t)
-
-
 class FrankaDataset(Dataset):
     def __init__(
         self,
@@ -72,7 +62,10 @@ class FrankaDataset(Dataset):
         # if we're done with a file, load the next into memory
         if file_idx != self.curr_file_idx:
             self.curr_file_data = torch.load(
-                self.file_list[file_idx], map_location=self.map_location
+                self.file_list[file_idx],
+                map_location=self.map_location,
+                mmap=True,
+                weights_only=False,
             )
 
         sensor_data = self.curr_file_data["sensor_data"][
