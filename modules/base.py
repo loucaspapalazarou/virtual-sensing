@@ -18,6 +18,7 @@ class BaseModelModule(pl.LightningModule):
         name,
     ):
         super().__init__()
+        self.automatic_optimization = False
         self.save_hyperparameters()
         self.resnet = ResNetBlock(
             out_features_per_image=resnet_features, resnet_checkpoint=resnet_checkpoint
@@ -37,7 +38,7 @@ class BaseModelModule(pl.LightningModule):
     def forward(self, src, tgt=None):
         raise NotImplementedError
 
-    def shared_step(self, batch):
+    def shared_step(self, batch, batch_idx, optimizer=None):
         sensor_data = batch["sensor_data"]
         camera_data = batch["camera_data"]
 
@@ -69,6 +70,12 @@ class BaseModelModule(pl.LightningModule):
             loss = nn.functional.mse_loss(output_target, tgt_target)
             total_loss += loss
 
+            # Perform the optimization step manually if in training
+            if optimizer is not None:
+                optimizer.zero_grad()  # Reset gradients
+                self.manual_backward(loss)  # Perform backpropagation
+                optimizer.step()  # Update the model parameters
+
         total_steps = (
             seq_len - (self.window_size + self.prediction_distance + 1)
         ) // self.stride
@@ -76,12 +83,14 @@ class BaseModelModule(pl.LightningModule):
         return avg_loss
 
     def training_step(self, batch, batch_idx):
-        avg_loss = self.shared_step(batch)
+        optimizer = self.optimizers()
+        avg_loss = self.shared_step(batch, batch_idx, optimizer)
+
         self.log("train_loss", avg_loss, sync_dist=True)
         return avg_loss
 
     def validation_step(self, batch, batch_idx):
-        avg_loss = self.shared_step(batch)
+        avg_loss = self.shared_step(batch, batch_idx)
         self.log("val_loss", avg_loss, sync_dist=True)
         return avg_loss
 
