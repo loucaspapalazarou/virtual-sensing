@@ -1,7 +1,7 @@
 import pytorch_lightning as pl
 import torch
 from torch import nn
-from modules.utils import combine_sensor_and_camera_data, ResNetBlock
+from modules.resnet import ResNetBlock
 
 
 class BaseModelModule(pl.LightningModule):
@@ -9,16 +9,13 @@ class BaseModelModule(pl.LightningModule):
         self,
         d_model,
         lr,
-        stride,
         window_size,
-        prediction_distance,
         target_feature_indices,
         resnet_features,
         resnet_checkpoint,
         name,
     ):
         super().__init__()
-        self.automatic_optimization = False
         self.save_hyperparameters()
         self.resnet = ResNetBlock(
             out_features_per_image=resnet_features, resnet_checkpoint=resnet_checkpoint
@@ -26,9 +23,8 @@ class BaseModelModule(pl.LightningModule):
         self.name = name
         self.d_model = d_model
         self.lr = lr
-        self.stride = stride
         self.window_size = window_size
-        self.prediction_distance = prediction_distance
+        # self.prediction_distance = prediction_distance
         self.target_feature_indices = target_feature_indices
 
         assert all(
@@ -38,54 +34,33 @@ class BaseModelModule(pl.LightningModule):
     def forward(self, src, tgt=None):
         raise NotImplementedError
 
-    def shared_step(self, batch, batch_idx, optimizer=None):
+    def combine_sensor_and_camera_data(self, sensor_data, camera_data):
+        resnet_features = self.resnet(camera_data)
+        combined_data = torch.cat((sensor_data, resnet_features), dim=2)
+        return combined_data
+
+    def shared_step(self, batch, batch_idx):
         sensor_data = batch["sensor_data"]
         camera_data = batch["camera_data"]
 
-        combined_data = combine_sensor_and_camera_data(
-            self.resnet, sensor_data, camera_data
-        )
+        combined_data = self.combine_sensor_and_camera_data(sensor_data, camera_data)
         batch_size, seq_len, input_size = combined_data.size()
         total_loss = 0.0
 
-        for i in range(
-            0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
-        ):
-            src = combined_data[:, i : i + self.window_size, :]
-            tgt = combined_data[
-                :,
-                i
-                + self.prediction_distance : i
-                + self.window_size
-                + self.prediction_distance,
-                :,
-            ]
+        src = combined_data[:, : self.window_size]
+        tgt = combined_data[:, -self.window_size :]
 
-            output = self(src, tgt)
+        output = self(src, tgt)
 
-            # Extract the target feature indices from both output and tgt
-            output_target = output[:, :, self.target_feature_indices]
-            tgt_target = tgt[:, :, self.target_feature_indices]
+        # Extract the target feature indices from both output and tgt
+        output_target = output[:, :, self.target_feature_indices]
+        tgt_target = tgt[:, :, self.target_feature_indices]
 
-            loss = nn.functional.mse_loss(output_target, tgt_target)
-            total_loss += loss
-
-            # Perform the optimization step manually if in training
-            if optimizer is not None:
-                optimizer.zero_grad()  # Reset gradients
-                self.manual_backward(loss)  # Perform backpropagation
-                optimizer.step()  # Update the model parameters
-
-        total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1)
-        ) // self.stride
-        avg_loss = total_loss / total_steps
-        return avg_loss
+        loss = nn.functional.mse_loss(output_target, tgt_target)
+        return loss
 
     def training_step(self, batch, batch_idx):
-        optimizer = self.optimizers()
-        avg_loss = self.shared_step(batch, batch_idx, optimizer)
-
+        avg_loss = self.shared_step(batch, batch_idx)
         self.log("train_loss", avg_loss, sync_dist=True)
         return avg_loss
 
@@ -98,13 +73,14 @@ class BaseModelModule(pl.LightningModule):
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
     def predict(self, batch):
+        # TODO: When predicting, zero out targets
         # Set the model to evaluation mode
         self.eval()
         with torch.no_grad():  # Disable gradient calculation
             sensor_data = batch["sensor_data"]
             camera_data = batch["camera_data"]
 
-            combined_data = combine_sensor_and_camera_data(
+            combined_data = self.combine_sensor_and_camera_data(
                 self.resnet, sensor_data, camera_data
             )
 

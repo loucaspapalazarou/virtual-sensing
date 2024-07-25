@@ -1,7 +1,6 @@
 import pytorch_lightning as pl
 import torch
 from torch import nn
-from modules.utils import combine_sensor_and_camera_data, ResNetBlock
 from modules.base import BaseModelModule
 
 
@@ -14,23 +13,20 @@ class TransformerModule(BaseModelModule):
         num_decoder_layers,
         dim_feedforward,
         lr,
-        stride,
         window_size,
-        prediction_distance,
         target_feature_indices,
         resnet_features,
         resnet_checkpoint,
         name,
     ):
         super().__init__(
-            lr,
-            stride,
-            window_size,
-            prediction_distance,
-            target_feature_indices,
-            resnet_features,
-            resnet_checkpoint,
-            name,
+            d_model=d_model,
+            name=name,
+            lr=lr,
+            window_size=window_size,
+            target_feature_indices=target_feature_indices,
+            resnet_features=resnet_features,
+            resnet_checkpoint=resnet_checkpoint,
         )
         self.model = nn.Transformer(
             d_model=d_model,
@@ -51,8 +47,8 @@ class TransformerModule(BaseModelModule):
             sensor_data = batch["sensor_data"]
             camera_data = batch["camera_data"]
 
-            combined_data = combine_sensor_and_camera_data(
-                self.resnet, sensor_data, camera_data
+            combined_data = self.combine_sensor_and_camera_data(
+                sensor_data, camera_data
             )
 
             batch_size, seq_len, input_size = combined_data.size()

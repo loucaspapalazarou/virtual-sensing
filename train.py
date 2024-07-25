@@ -46,6 +46,9 @@ def main():
         num_workers=params["num_workers"],
         data_portion=params["data_portion"],
         episode_length=params["episode_length"],
+        stride=params["stride"],
+        window_size=params["window_size"],
+        prediction_distance=params["prediction_distance"],
     )
 
     # [num of sensor features] + [resnet_featues * 3] (3 images)
@@ -55,9 +58,7 @@ def main():
         "name": args.model,
         "d_model": data_dim,
         "lr": params["lr"],
-        "stride": params["stride"],
         "window_size": params["window_size"],
-        "prediction_distance": params["prediction_distance"],
         "target_feature_indices": params["target_feature_indices"],
         "resnet_features": params["resnet_features"],
         "resnet_checkpoint": params["resnet_checkpoint"],
