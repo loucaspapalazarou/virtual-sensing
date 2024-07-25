@@ -104,9 +104,9 @@ def main():
         max_epochs=params["max_epochs"],
         log_every_n_steps=params["log_every_n_steps"],
         fast_dev_run=args.fast_dev_run,
-        val_check_interval=0.1,
+        val_check_interval=0.2,
         accelerator="gpu",
-        devices=2,
+        devices=1,
         num_nodes=1,
         strategy="ddp",
     )

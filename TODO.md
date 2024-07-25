@@ -1,7 +1,6 @@
 Code
 ----------
 - !!!!!! FIX TRAINING !!!!!!
-- Add that inference is slow, say it in drawbacks etc
 - Train RNN (baseline)
 - Visualize sensors
 - Train with less targets (more accuracy?)
@@ -15,3 +14,4 @@ Document
 - Say that there are a lot of approaches (seq2seq etc) justify why we went with our specific ones
 - (Future work) Principal component analysis (PCA) algorithm, add that inthe future work, curse of dimensionality
 - Problem formalization in more detail, use letter notations and stuff like that
+- Add that inference is slow, say it in drawbacks etc

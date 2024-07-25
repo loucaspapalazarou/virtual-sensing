@@ -5,7 +5,7 @@
 #SBATCH --qos=gpu
 #SBATCH --time=24:00:00
 #SBATCH --account=tc064-s2567498
-#SBATCH --gres=gpu:2
+#SBATCH --gres=gpu:1
 
 # Check if the model argument is provided
 if [ -z "$1" ]; then
@@ -27,8 +27,8 @@ export MPLCONFIGDIR=/work/tc064/tc064/s2567498/matplotlib
 export HF_HOME=/work/tc064/tc064/s2567498/transformers_cache
 export TORCH_HOME=/work/tc064/tc064/s2567498/torch_home
 
-export SLURM_NTASKS_PER_NODE=2
-export SLURM_NTASKS=2
+export SLURM_NTASKS_PER_NODE=1
+export SLURM_NTASKS=1
 
 # Load the required modules
 source /work/tc064/tc064/s2567498/venv/bin/activate
