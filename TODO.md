@@ -1,5 +1,6 @@
 Code
 ----------
+- !!!!!! FIX TRAINING !!!!!!
 - Add that inference is slow, say it in drawbacks etc
 - Train RNN (baseline)
 - Visualize sensors

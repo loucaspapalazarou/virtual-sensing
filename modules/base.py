@@ -7,6 +7,7 @@ from modules.utils import combine_sensor_and_camera_data, ResNetBlock
 class BaseModelModule(pl.LightningModule):
     def __init__(
         self,
+        d_model,
         lr,
         stride,
         window_size,
@@ -22,6 +23,7 @@ class BaseModelModule(pl.LightningModule):
             out_features_per_image=resnet_features, resnet_checkpoint=resnet_checkpoint
         )
         self.name = name
+        self.d_model = d_model
         self.lr = lr
         self.stride = stride
         self.window_size = window_size
@@ -29,7 +31,7 @@ class BaseModelModule(pl.LightningModule):
         self.target_feature_indices = target_feature_indices
 
         assert all(
-            0 <= idx < self.hparams.d_model for idx in target_feature_indices
+            0 <= idx < self.d_model for idx in target_feature_indices
         ), "All target feature indices must be valid indices within d_model."
 
     def forward(self, src, tgt=None):
