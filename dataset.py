@@ -34,6 +34,10 @@ class FrankaDataset(Dataset):
             [
                 transforms.Resize(256),
                 transforms.CenterCrop(224),
+                transforms.ConvertImageDtype(torch.float),
+                transforms.Normalize(
+                    mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]
+                ),
             ]
         )
 
@@ -127,10 +131,10 @@ class FrankaDataModule(pl.LightningDataModule):
             prediction_distance=self.prediction_distance,
             use_cpu=self.use_cpu,
         )
-        data_points = int(len(dataset) * self.data_portion)
         print(
-            f"Using {data_points}/{len(dataset)} data episodes. Episode length: {self.epidsode_length}"
+            f"Using {int(self.data_portion*100)}% of the data. Episode length: {self.epidsode_length}"
         )
+        data_points = int(len(dataset) * self.data_portion)
         dataset = Subset(dataset, range(data_points))
         self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 
