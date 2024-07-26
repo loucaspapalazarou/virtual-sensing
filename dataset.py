@@ -2,7 +2,7 @@ import os
 import json
 import torch
 from torch.utils.data import Dataset
-import pytorch_lightning as pl
+from lightning.pytorch import LightningDataModule
 from torch.utils.data import DataLoader, random_split, Subset
 from torchvision import transforms
 
@@ -95,7 +95,7 @@ class FrankaDataset(Dataset):
         return len(self.index_map)
 
 
-class FrankaDataModule(pl.LightningDataModule):
+class FrankaDataModule(LightningDataModule):
 
     def __init__(
         self,

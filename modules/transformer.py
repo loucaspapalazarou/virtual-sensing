@@ -1,5 +1,4 @@
 from typing import override
-import pytorch_lightning as pl
 import torch
 from torch import nn
 from modules.base import BaseModelModule

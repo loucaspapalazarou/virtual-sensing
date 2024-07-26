@@ -1,10 +1,11 @@
-batch_size: 4
+activation: tanh
+batch_size: 8
 d_model: 80
-data_dir: /work/tc064/tc064/s2567498/data-w-camera/
+data_dir: /work/tc064/tc064/s2567498/data-w-camera
 data_portion: 1.0
 dim_feedforward: 128
+end_lr: 0.001
 episode_length: 200
-lr: 0.001
 name: transformer
 nhead: 10
 num_decoder_layers: 3
@@ -13,10 +14,10 @@ num_workers: 0
 prediction_distance: 1
 resnet_checkpoint: /work/tc064/tc064/s2567498/resnet18-f37072fd.pth
 resnet_features: 15
-stride: 1
+start_lr: 0.01
+stride: 4
 target_feature_indices:
 - 7
 - 8
-- 9
 use_cpu: false
-window_size: 20
+window_size: 30

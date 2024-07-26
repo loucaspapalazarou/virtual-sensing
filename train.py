@@ -1,5 +1,6 @@
-import pytorch_lightning as pl
+from lightning.pytorch import Trainer
 from lightning.pytorch import loggers as pl_loggers
+from lightning.pytorch.callbacks import ModelCheckpoint
 from dataset import FrankaDataModule
 import argparse
 import json
@@ -102,11 +103,16 @@ def main():
     else:
         model = model_class(**model_params)
 
+    checkpoint_callback = ModelCheckpoint(
+        dirpath="./lightning_logs",
+        every_n_train_steps=50,
+    )
+
     tb_logger = pl_loggers.TensorBoardLogger(
         save_dir="./lightning_logs", name=f"{args.model}"
     )
 
-    trainer = pl.Trainer(
+    trainer = Trainer(
         logger=tb_logger,
         max_epochs=params["max_epochs"],
         log_every_n_steps=params["log_every_n_steps"],
@@ -116,6 +122,7 @@ def main():
         devices=1,
         num_nodes=1,
         strategy="ddp",
+        callbacks=[checkpoint_callback],
     )
 
     trainer.fit(model, data_module)

@@ -1,11 +1,11 @@
-import pytorch_lightning as pl
+from lightning.pytorch import LightningModule
 import torch
 from torch import nn
 from modules.resnet import ResNetBlock
 import torch.nn.functional as F
 
 
-class BaseModelModule(pl.LightningModule):
+class BaseModelModule(LightningModule):
     def __init__(
         self,
         d_model,
