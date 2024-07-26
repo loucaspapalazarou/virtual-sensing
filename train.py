@@ -104,7 +104,6 @@ def main():
         model = model_class(**model_params)
 
     checkpoint_callback = ModelCheckpoint(
-        dirpath="./lightning_logs",
         every_n_train_steps=50,
     )
 
