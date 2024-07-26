@@ -1,4 +1,3 @@
-from typing import override
 import torch
 from torch import nn
 from modules.base import BaseModelModule
@@ -47,10 +46,9 @@ class TransformerModule(BaseModelModule):
     def forward(self, src, tgt):
         output = self.model(src, tgt)
         if self.activation == "tanh":
-            return torch.nn.functional.tanh(output)
+            return torch.tanh(output)
         return output
 
-    @override
     def predict(self, batch):
         self.eval()  # Set the model to evaluation mode
         with torch.no_grad():  # Disable gradient calculation

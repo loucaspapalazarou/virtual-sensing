@@ -42,7 +42,7 @@ class MambaModule(BaseModelModule):
     def forward(self, src, tgt=None):
         output = self.model(src)
         if self.activation == "tanh":
-            return torch.nn.functional.tanh(output)
+            return torch.tanh(output)
         return output
 
     def predict(self, batch):

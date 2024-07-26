@@ -1,9 +1,8 @@
 import os
 import json
 import torch
-from torch.utils.data import Dataset
+from torch.utils.data import Dataset, DataLoader, random_split, Subset
 from lightning.pytorch import LightningDataModule
-from torch.utils.data import DataLoader, random_split, Subset
 from torchvision import transforms
 
 
@@ -15,16 +14,13 @@ class FrankaDataset(Dataset):
         window_size,
         stride,
         prediction_distance,
-        use_cpu,
     ):
         self.file_list = [
             os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pt")
         ]
         self.index_map = []  # maps array index to (file, env, step)
         self.episode_length = episode_length
-        self.use_cpu = use_cpu
         self.data_dir = data_dir
-        self.map_location = torch.device("cpu") if use_cpu else None
         self.curr_file_idx = -1
         self.curr_file_data = None
         self.window_size = window_size
@@ -67,16 +63,15 @@ class FrankaDataset(Dataset):
         if file_idx != self.curr_file_idx:
             self.curr_file_data = torch.load(
                 self.file_list[file_idx],
-                map_location=self.map_location,
-                mmap=True,
-                weights_only=False,
+                map_location=torch.device("cpu"),
             )
+            self.curr_file_idx = file_idx
 
-        sensor_data = self.curr_file_data["sensor_data"][
+        sensor_data: torch.Tensor = self.curr_file_data["sensor_data"][
             step_idx : step_idx + self.window_size + self.prediction_distance, env_idx
         ]
-        camera_data = self.curr_file_data["camera_data"][
-            step_idx : step_idx + self.window_size + +self.prediction_distance, env_idx
+        camera_data: torch.Tensor = self.curr_file_data["camera_data"][
+            step_idx : step_idx + self.window_size + self.prediction_distance, env_idx
         ]
 
         # remove alpha channel
@@ -85,6 +80,10 @@ class FrankaDataset(Dataset):
         camera_data = camera_data.permute(0, 1, 4, 2, 3)
         # transforms
         camera_data = self.image_preprocess(camera_data)
+
+        # Move data to GPU
+        sensor_data = sensor_data.cuda()
+        camera_data = camera_data.cuda()
 
         return {
             "sensor_data": sensor_data,
@@ -107,7 +106,6 @@ class FrankaDataModule(LightningDataModule):
         window_size,
         stride,
         prediction_distance,
-        use_cpu=False,
     ):
         assert 0 < data_portion <= 1.0
         super().__init__()
@@ -120,7 +118,6 @@ class FrankaDataModule(LightningDataModule):
         self.window_size = window_size
         self.stride = stride
         self.prediction_distance = prediction_distance
-        self.use_cpu = use_cpu
 
     def setup(self, stage=None):
         dataset = FrankaDataset(
@@ -129,7 +126,6 @@ class FrankaDataModule(LightningDataModule):
             window_size=self.window_size,
             stride=self.stride,
             prediction_distance=self.prediction_distance,
-            use_cpu=self.use_cpu,
         )
         print(
             f"Using {int(self.data_portion*100)}% of the data. Episode length: {self.epidsode_length}"

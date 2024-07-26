@@ -42,7 +42,7 @@ class RNNModule(BaseModelModule):
     def forward(self, src, tgt=None):
         rnn_out, _ = self.model(src)
         if self.activation == "tanh":
-            return torch.nn.functional.tanh(rnn_out)
+            return torch.tanh(rnn_out)
         return rnn_out
 
     def predict(self, batch):

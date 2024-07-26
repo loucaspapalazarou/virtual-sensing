@@ -118,7 +118,7 @@ def main():
         fast_dev_run=args.fast_dev_run,
         val_check_interval=0.2,
         accelerator="gpu",
-        devices=1,
+        devices="auto",
         num_nodes=1,
         strategy="ddp",
         callbacks=[checkpoint_callback],
