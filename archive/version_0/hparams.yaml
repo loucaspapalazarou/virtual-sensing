@@ -1,0 +1,12 @@
+name: transformer
+d_model: 36
+nhead: 6
+num_encoder_layers: 3
+num_decoder_layers: 3
+dim_feedforward: 256
+lr: 0.001
+stride: 12
+prediction_horizon: 12
+data_dir: /mnt/BigHD_1/loucas/data/
+batch_size: 12
+num_workers: 0

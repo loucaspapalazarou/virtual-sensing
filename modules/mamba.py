@@ -1,139 +1,72 @@
-import torch
 from mamba_ssm import Mamba  # type: ignore
-import pytorch_lightning as pl
-from modules.resnet import ResNetBlock
-from modules.utils import combine_sensor_and_camera_data
+from modules.base import BaseModelModule
+import torch
 
 
-class MambaModule(pl.LightningModule):
-
+class MambaModule(BaseModelModule):
     def __init__(
         self,
         d_model,
         d_state,
         d_conv,
         expand,
-        lr,
-        stride,
+        start_lr,
+        end_lr,
+        activation,
         window_size,
-        prediction_distance,
         target_feature_indices,
+        prediction_distance,
         resnet_features,
         resnet_checkpoint,
         name,
     ):
-        super().__init__()
-        self.save_hyperparameters()
+        super().__init__(
+            d_model=d_model,
+            name=name,
+            start_lr=start_lr,
+            end_lr=end_lr,
+            window_size=window_size,
+            prediction_distance=prediction_distance,
+            target_feature_indices=target_feature_indices,
+            resnet_features=resnet_features,
+            resnet_checkpoint=resnet_checkpoint,
+        )
+        self.activation = activation
         self.model = Mamba(
             d_model=d_model,
             d_state=d_state,
             d_conv=d_conv,
             expand=expand,
         )
-        self.resnet = ResNetBlock(
-            out_features_per_image=resnet_features, resnet_checkpoint=resnet_checkpoint
-        )
-        self.name = name
-        self.automatic_optimization = False
-        self.lr = lr
-        self.stride = stride
-        self.window_size = window_size
-        self.prediction_distance = prediction_distance
-        self.target_feature_indices = target_feature_indices
 
-        assert all(
-            0 <= idx < d_model for idx in target_feature_indices
-        ), "All target feature indices must be valid indices within d_model."
+    def forward(self, src, tgt=None):
+        output = self.model(src)
+        if self.activation == "tanh":
+            return torch.nn.functional.tanh(output)
+        return output
 
-    def forward(self, src):
-        return self.model(src)
+    def predict(self, batch):
+        # TODO: zero-out/mask targets
+        self.eval()
+        with torch.no_grad():
+            sensor_data = batch["sensor_data"]
+            camera_data = batch["camera_data"]
 
-    def training_step(self, batch, batch_idx):
-        sensor_data = batch["sensor_data"]
-        camera_data = batch["camera_data"]
+            combined_data = self.combine_sensor_and_camera_data(
+                sensor_data, camera_data
+            )
 
-        combined_data = combine_sensor_and_camera_data(
-            self.resnet, sensor_data, camera_data
-        )
+            batch_size, seq_len, input_size = combined_data.size()
 
-        batch_size, seq_len, input_size = combined_data.size()
-        total_loss = 0.0
+            start_index = seq_len - self.window_size
 
-        for i in range(
-            0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
-        ):
-            src = combined_data[:, i : i + self.window_size, :]
-            tgt = combined_data[
-                :,
-                i
-                + self.prediction_distance : i
-                + self.window_size
-                + self.prediction_distance,
-                :,
-            ]
+            if start_index < 0:
+                raise ValueError(
+                    "The sequence length is too short for the given window size and prediction distance."
+                )
 
-            # Forward pass
-            output = self(src)
+            src = combined_data[:, start_index : start_index + self.window_size, :]
 
-            # Extract the target feature indices from both output and tgt
-            output_target = output[:, :, self.target_feature_indices]
-            tgt_target = tgt[:, :, self.target_feature_indices]
+            output = self.forward(src)
 
-            # Compute loss
-            loss = torch.nn.functional.mse_loss(output_target, tgt_target)
-            total_loss += loss
-
-        total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1)
-        ) // self.stride
-        avg_loss = total_loss / total_steps
-        self.log("train_loss", avg_loss, sync_dist=True)
-        return avg_loss
-
-    def validation_step(self, batch, batch_idx):
-        sensor_data = batch["sensor_data"]
-        camera_data = batch["camera_data"]
-
-        combined_data = combine_sensor_and_camera_data(
-            self.resnet, sensor_data, camera_data
-        )
-        batch_size, seq_len, input_size = combined_data.size()
-        total_loss = 0.0
-
-        for i in range(
-            0, seq_len - (self.window_size + self.prediction_distance + 1), self.stride
-        ):
-            src = combined_data[:, i : i + self.window_size, :]
-            tgt = combined_data[
-                :,
-                i
-                + self.prediction_distance : i
-                + self.window_size
-                + self.prediction_distance,
-                :,
-            ]
-
-            # Forward pass
-            output = self(src)
-
-            # Extract the target feature indices from both output and tgt
-            output_target = output[:, :, self.target_feature_indices]
-            tgt_target = tgt[:, :, self.target_feature_indices]
-
-            # Compute loss
-            loss = torch.nn.functional.mse_loss(output_target, tgt_target)
-            total_loss += loss
-
-        total_steps = (
-            seq_len - (self.window_size + self.prediction_distance + 1)
-        ) // self.stride
-
-        avg_loss = total_loss / total_steps
-        self.log("val_loss", avg_loss, sync_dist=True)
-        return avg_loss
-
-    def configure_optimizers(self):
-        return torch.optim.Adam(self.parameters(), lr=self.lr)
-
-    def predict(self, input):
-        raise NotImplementedError()
+            return output[:, -self.prediction_distance :, self.target_feature_indices]

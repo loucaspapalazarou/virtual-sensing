@@ -1,0 +1,22 @@
+activation: ''
+batch_size: 6
+d_model: 80
+data_dir: /work/tc064/tc064/s2567498/data-w-camera/
+data_portion: 0.02
+end_lr: 0.001
+episode_length: 200
+name: rnn
+num_layers: 2
+num_workers: 0
+prediction_distance: 1
+resnet_checkpoint: /work/tc064/tc064/s2567498/resnet18-f37072fd.pth
+resnet_features: 15
+rnn_hidden_size: 128
+start_lr: 0.1
+stride: 1
+target_feature_indices:
+- 7
+- 8
+- 9
+use_cpu: false
+window_size: 20
