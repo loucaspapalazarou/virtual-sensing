@@ -3,6 +3,7 @@ from lightning.pytorch import loggers as pl_loggers
 from dataset import FrankaDataModule
 import argparse
 import json
+import os
 
 from modules.transformer import TransformerModule
 from modules.mamba import MambaModule
@@ -41,7 +42,7 @@ def main():
         params = json.load(f)
 
     data_module = FrankaDataModule(
-        data_dir=params["data_dir"],
+        data_dir=os.path.join("WORK_DIR", params["data_dir"]),
         batch_size=params["batch_size"],
         num_workers=params["num_workers"],
         data_portion=params["data_portion"],
