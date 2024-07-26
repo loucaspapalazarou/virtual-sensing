@@ -42,7 +42,7 @@ def main():
         params = json.load(f)
 
     data_module = FrankaDataModule(
-        data_dir=os.path.join("WORK_DIR", params["data_dir"]),
+        data_dir=os.path.join(os.getenv("WORK_DIR"), params["data_dir"]),
         batch_size=params["batch_size"],
         num_workers=params["num_workers"],
         data_portion=params["data_portion"],
@@ -65,7 +65,9 @@ def main():
         "prediction_distance": params["prediction_distance"],
         "target_feature_indices": params["target_feature_indices"],
         "resnet_features": params["resnet_features"],
-        "resnet_checkpoint": params["resnet_checkpoint"],
+        "resnet_checkpoint": os.path.join(
+            os.getenv("WORK_DIR"), params["resnet_checkpoint"]
+        ),
     }
 
     model_specific_params = {}
