@@ -20,3 +20,5 @@ Document
 - Problem formalization in more detail, use letter notations and stuff like that
 - Add that inference is slow, say it in drawbacks etc
 - Image processing each step, slow
+- Unfortunately, due to the time contraints a lot of the descisions had to be made ad-hoc, empiricaally and using our best judgment without being able to fully each one
+- Retrospection section, heinsight is 20-20

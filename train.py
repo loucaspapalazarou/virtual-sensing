@@ -57,8 +57,11 @@ def main():
     common_params = {
         "name": args.model,
         "d_model": data_dim,
-        "lr": params["lr"],
+        "start_lr": params["start_lr"],
+        "end_lr": params["end_lr"],
+        "activation": params["activation"],
         "window_size": params["window_size"],
+        "prediction_distance": params["prediction_distance"],
         "target_feature_indices": params["target_feature_indices"],
         "resnet_features": params["resnet_features"],
         "resnet_checkpoint": params["resnet_checkpoint"],

@@ -1,3 +1,4 @@
+from typing import override
 import pytorch_lightning as pl
 import torch
 from torch import nn
@@ -5,6 +6,7 @@ from modules.base import BaseModelModule
 
 
 class TransformerModule(BaseModelModule):
+
     def __init__(
         self,
         d_model,
@@ -12,8 +14,11 @@ class TransformerModule(BaseModelModule):
         num_encoder_layers,
         num_decoder_layers,
         dim_feedforward,
-        lr,
+        start_lr,
+        end_lr,
+        activation,
         window_size,
+        prediction_distance,
         target_feature_indices,
         resnet_features,
         resnet_checkpoint,
@@ -22,12 +27,15 @@ class TransformerModule(BaseModelModule):
         super().__init__(
             d_model=d_model,
             name=name,
-            lr=lr,
+            start_lr=start_lr,
+            end_lr=end_lr,
             window_size=window_size,
+            prediction_distance=prediction_distance,
             target_feature_indices=target_feature_indices,
             resnet_features=resnet_features,
             resnet_checkpoint=resnet_checkpoint,
         )
+        self.activation = activation
         self.model = nn.Transformer(
             d_model=d_model,
             nhead=nhead,
@@ -39,8 +47,11 @@ class TransformerModule(BaseModelModule):
 
     def forward(self, src, tgt):
         output = self.model(src, tgt)
-        return nn.functional.tanh(output)
+        if self.activation == "tanh":
+            return torch.nn.functional.tanh(output)
+        return output
 
+    @override
     def predict(self, batch):
         self.eval()  # Set the model to evaluation mode
         with torch.no_grad():  # Disable gradient calculation
