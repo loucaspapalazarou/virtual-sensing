@@ -22,17 +22,23 @@ else
   FAST_DEV_RUN=""
 fi
 
-# Set environment variables for writable directories
-export MPLCONFIGDIR=/work/tc064/tc064/s2567498/matplotlib
-export HF_HOME=/work/tc064/tc064/s2567498/transformers_cache
-export TORCH_HOME=/work/tc064/tc064/s2567498/torch_home
+# Load environment variables from .bashrc
+source ~/.bashrc
+
+# Ensure environment variables are set
+: "${WORK_DIR:?}"
+: "${VENV_DIR:?}"
+: "${PROJECT_DIR:?}"
+: "${MPLCONFIGDIR:?}"
+: "${HF_HOME:?}"
+: "${TORCH_HOME:?}"
 
 export SLURM_NTASKS_PER_NODE=1
 export SLURM_NTASKS=1
 
 # Load the required modules
-source /work/tc064/tc064/s2567498/venv/bin/activate
+source $VENV_DIR/bin/activate
 
-cd /work/tc064/tc064/s2567498/virtual-sensing
+cd $PROJECT_DIR
 
 srun --ntasks=$SLURM_NTASKS --ntasks-per-node=$SLURM_NTASKS_PER_NODE python train.py --model $MODEL $FAST_DEV_RUN
