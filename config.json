@@ -3,7 +3,7 @@
   "resnet_checkpoint": "resnet18-f37072fd.pth",
   "data_portion": 0.2,
   "episode_length": 200,
-  "batch_size": 12,
+  "batch_size": 4,
   "num_workers": 0,
   "max_epochs": 2,
   "prediction_distance": 1,

@@ -14,6 +14,7 @@ class FrankaDataset(Dataset):
         window_size,
         stride,
         prediction_distance,
+        limited_gpu_memory,
     ):
         self.file_list = [
             os.path.join(data_dir, f) for f in os.listdir(data_dir) if f.endswith(".pt")
@@ -26,6 +27,7 @@ class FrankaDataset(Dataset):
         self.window_size = window_size
         self.stride = stride
         self.prediction_distance = prediction_distance
+        self.map_location = torch.device("cpu") if limited_gpu_memory else None
         self.image_preprocess = transforms.Compose(
             [
                 transforms.Resize(256),
@@ -63,7 +65,7 @@ class FrankaDataset(Dataset):
         if file_idx != self.curr_file_idx:
             self.curr_file_data = torch.load(
                 self.file_list[file_idx],
-                map_location=torch.device("cpu"),
+                map_location=self.map_location,
             )
             self.curr_file_idx = file_idx
 
@@ -81,9 +83,10 @@ class FrankaDataset(Dataset):
         # transforms
         camera_data = self.image_preprocess(camera_data)
 
-        # Move data to GPU
-        sensor_data = sensor_data.cuda()
-        camera_data = camera_data.cuda()
+        if self.map_location is not None:
+            # manually move data to GPU
+            sensor_data = sensor_data.cuda()
+            camera_data = camera_data.cuda()
 
         return {
             "sensor_data": sensor_data,
@@ -106,6 +109,7 @@ class FrankaDataModule(LightningDataModule):
         window_size,
         stride,
         prediction_distance,
+        limited_gpu_memory=False,
     ):
         assert 0 < data_portion <= 1.0
         super().__init__()
@@ -118,6 +122,7 @@ class FrankaDataModule(LightningDataModule):
         self.window_size = window_size
         self.stride = stride
         self.prediction_distance = prediction_distance
+        self.limited_gpu_memory = limited_gpu_memory
 
     def setup(self, stage=None):
         dataset = FrankaDataset(
@@ -126,6 +131,7 @@ class FrankaDataModule(LightningDataModule):
             window_size=self.window_size,
             stride=self.stride,
             prediction_distance=self.prediction_distance,
+            limited_gpu_memory=self.limited_gpu_memory,
         )
         print(
             f"Using {int(self.data_portion*100)}% of the data. Episode length: {self.epidsode_length}"

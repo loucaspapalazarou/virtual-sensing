@@ -37,6 +37,12 @@ def main():
         help="Dev run",
         action=argparse.BooleanOptionalAction,
     )
+    parser.add_argument(
+        "--devices",
+        type=str,
+        default="auto",
+        help="List of GPU devices. Example: [0,1,2]",
+    )
     args = parser.parse_args()
 
     with open(args.config_file, "r") as f:
@@ -51,6 +57,7 @@ def main():
         stride=params["stride"],
         window_size=params["window_size"],
         prediction_distance=params["prediction_distance"],
+        limited_gpu_memory=True,
     )
 
     # [num of sensor features] + [resnet_featues * 3] (3 images)
@@ -118,7 +125,7 @@ def main():
         fast_dev_run=args.fast_dev_run,
         val_check_interval=0.2,
         accelerator="gpu",
-        devices="auto",
+        devices="auto" if args.devices == "auto" else eval(args.devices),
         num_nodes=1,
         strategy="ddp",
         callbacks=[checkpoint_callback],
