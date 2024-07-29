@@ -1,0 +1,23 @@
+d_model: 80
+start_lr: 0.01
+end_lr: 0.001
+window_size: 30
+prediction_distance: 1
+target_feature_indices:
+- 7
+- 8
+resnet_features: 15
+resnet_checkpoint: /mnt/BigHD_1/loucas/resnet18-f37072fd.pth
+name: transformer
+nhead: 10
+num_encoder_layers: 3
+num_decoder_layers: 3
+dim_feedforward: 128
+activation: tanh
+data_dir: /mnt/BigHD_1/loucas/data-w-camera
+batch_size: 4
+num_workers: 0
+data_portion: 0.2
+episode_length: 200
+stride: 1
+limited_gpu_memory: true
