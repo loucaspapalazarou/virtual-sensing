@@ -2,6 +2,8 @@ from lightning.pytorch import Trainer
 from lightning.pytorch import loggers as pl_loggers
 from lightning.pytorch.callbacks import ModelCheckpoint
 from dataset import FrankaDataModule
+from dotenv import load_dotenv
+from services import EmailCallback
 import argparse
 import json
 import os
@@ -111,24 +113,28 @@ def main():
         model = model_class(**model_params)
 
     checkpoint_callback = ModelCheckpoint(
-        every_n_train_steps=50,
+        every_n_train_steps=100,
     )
 
     tb_logger = pl_loggers.TensorBoardLogger(
         save_dir="./lightning_logs", name=f"{args.model}"
     )
 
+    load_dotenv()
+    email_callback = EmailCallback("loukis500@gmail.com", os.getenv("EMAIL_PASSWORD"))
+
     trainer = Trainer(
         logger=tb_logger,
         max_epochs=params["max_epochs"],
         log_every_n_steps=params["log_every_n_steps"],
         fast_dev_run=args.fast_dev_run,
-        val_check_interval=0.2,
+        val_check_interval=500,
+        check_val_every_n_epoch=None,
         accelerator="gpu",
         devices="auto" if args.devices == "auto" else eval(args.devices),
         num_nodes=1,
         strategy="ddp",
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback, email_callback],
     )
 
     trainer.fit(model, data_module)
