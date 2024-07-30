@@ -23,45 +23,48 @@ class EmailCallback(Callback):
         self.decimals = decimals
 
     def on_train_end(self, trainer, pl_module):
-        # Create the email message
-        msg = MIMEMultipart()
-        msg["From"] = self.email
-        msg["To"] = self.email
-        msg["Subject"] = f"Training for {pl_module.__class__.__name__} completed"
+        try:
+            # Create the email message
+            msg = MIMEMultipart()
+            msg["From"] = self.email
+            msg["To"] = self.email
+            msg["Subject"] = f"Training for {pl_module.__class__.__name__} completed"
 
-        # Gather detailed training information
-        final_epoch = trainer.current_epoch
-        total_steps = trainer.global_step
-        metrics = trainer.callback_metrics
+            # Gather detailed training information
+            final_epoch = trainer.current_epoch
+            total_steps = trainer.global_step
+            metrics = trainer.callback_metrics
 
-        # Format the body of the email with named placeholders
-        body = BODY.format(
-            module=pl_module.__class__.__name__,
-            final_epoch=final_epoch,
-            total_steps=total_steps,
-        )
+            # Format the body of the email with named placeholders
+            body = BODY.format(
+                module=pl_module.__class__.__name__,
+                final_epoch=final_epoch,
+                total_steps=total_steps,
+            )
 
-        for key, value in metrics.items():
-            if isinstance(value, (float, int)):  # Ensure value is numeric
-                value = round(
-                    value, self.decimals
-                )  # Round the value to 4 decimal places
-            elif hasattr(value, "item"):  # For tensors or numpy values
-                value = round(value.item(), self.decimals)
-            body += f"- {key}: {value}\n"
+            for key, value in metrics.items():
+                if isinstance(value, (float, int)):  # Ensure value is numeric
+                    value = round(
+                        value, self.decimals
+                    )  # Round the value to 4 decimal places
+                elif hasattr(value, "item"):  # For tensors or numpy values
+                    value = round(value.item(), self.decimals)
+                body += f"- {key}: {value}\n"
 
-        body += "\nBest regards,\nYour Training System"
+            body += "\nBest regards,\nYour Training System"
 
-        # Attach the body with the msg instance
-        msg.attach(MIMEText(body, "plain"))
+            # Attach the body with the msg instance
+            msg.attach(MIMEText(body, "plain"))
 
-        # Set up the SMTP server
-        server = smtplib.SMTP("smtp.gmail.com", 587)
-        server.starttls()
-        server.login(self.email, self.password)
+            # Set up the SMTP server
+            server = smtplib.SMTP("smtp.gmail.com", 587)
+            server.starttls()
+            server.login(self.email, self.password)
 
-        # Send the email
-        server.sendmail(self.email, self.email, msg.as_string())
+            # Send the email
+            server.sendmail(self.email, self.email, msg.as_string())
 
-        # Quit the server
-        server.quit()
+            # Quit the server
+            server.quit()
+        except OSError as e:
+            print(f"Network is unreachable: {e}")

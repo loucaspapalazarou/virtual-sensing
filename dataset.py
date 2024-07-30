@@ -134,10 +134,9 @@ class FrankaDataModule(LightningDataModule):
             limited_gpu_memory=self.limited_gpu_memory,
         )
         data_points = int(len(dataset) * self.data_portion)
-        if self.logger:
-            self.logger.info(
-                f"Using {int(self.data_portion*100)}% of the data ({data_points}/{len(dataset)} samples). Episode length: {self.epidsode_length}"
-            )
+        print(
+            f"Using {int(self.data_portion*100)}% of the data ({data_points}/{len(dataset)} samples). Episode length: {self.epidsode_length}"
+        )
         dataset = Subset(dataset, range(data_points))
         self.train_dataset, self.val_dataset = random_split(dataset, [0.8, 0.2])
 
