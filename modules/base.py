@@ -64,18 +64,12 @@ class BaseModelModule(LightningModule):
 
     def training_step(self, batch, batch_idx):
         loss_dict = self.shared_step(batch, batch_idx, stage="train")
-        self.log_dict(
-            loss_dict,
-            sync_dist=True,
-        )
+        self.log_dict(loss_dict, sync_dist=True, on_step=True, on_epoch=False)
         return loss_dict["train/mse_loss"]
 
     def validation_step(self, batch, batch_idx):
         loss_dict = self.shared_step(batch, batch_idx, stage="val")
-        self.log_dict(
-            loss_dict,
-            sync_dist=True,
-        )
+        self.log_dict(loss_dict, sync_dist=True, on_step=True, on_epoch=False)
 
     def configure_optimizers(self):
         optimizer = torch.optim.Adam(self.parameters(), lr=self.start_lr)

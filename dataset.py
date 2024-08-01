@@ -96,6 +96,9 @@ class FrankaDataset(Dataset):
     def __len__(self):
         return len(self.index_map)
 
+    def get_metadata(self):
+        return self.metadata
+
 
 class FrankaDataModule(LightningDataModule):
 
@@ -133,6 +136,7 @@ class FrankaDataModule(LightningDataModule):
             prediction_distance=self.prediction_distance,
             limited_gpu_memory=self.limited_gpu_memory,
         )
+        self.metadata = dataset.get_metadata()
         data_points = int(len(dataset) * self.data_portion)
         print(
             f"Using {int(self.data_portion*100)}% of the data ({data_points}/{len(dataset)} samples). Episode length: {self.epidsode_length}"
@@ -157,6 +161,4 @@ class FrankaDataModule(LightningDataModule):
         )
 
     def get_num_sensor_features(self):
-        with open(os.path.join(self.data_dir, "metadata.json"), "r") as f:
-            metadata = json.load(f)
-            return metadata["dim"]
+        return self.metadata["dim"]
