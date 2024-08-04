@@ -1,6 +1,5 @@
 __pycache__
 wandb/
 venv/
-data/
 *.out
 .env

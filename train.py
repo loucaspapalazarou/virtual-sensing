@@ -116,8 +116,10 @@ def main():
         every_n_train_steps=100,
     )
 
+    exp_name: str = args.config_file
+    exp_name.removesuffix(".json")
     tb_logger = pl_loggers.TensorBoardLogger(
-        save_dir="./lightning_logs", name=f"{args.model}"
+        save_dir="./lightning_logs", name=f"{args.model}/{exp_name}"
     )
 
     load_dotenv()

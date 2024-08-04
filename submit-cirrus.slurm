@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --partition=gpu
 #SBATCH --qos=gpu
-#SBATCH --time=24:00:00
+#SBATCH --time=48:00:00
 #SBATCH --account=tc064-s2567498
 #SBATCH --gres=gpu:1
 
@@ -36,4 +36,4 @@ source /work/tc064/tc064/s2567498/venv/bin/activate
 
 cd /work/tc064/tc064/s2567498/virtual-sensing
 
-srun --ntasks=$SLURM_NTASKS --ntasks-per-node=$SLURM_NTASKS_PER_NODE python train.py --model $MODEL $FAST_DEV_RUN
+srun --ntasks=$SLURM_NTASKS --ntasks-per-node=$SLURM_NTASKS_PER_NODE python train.py --model $MODEL $FAST_DEV_RUN --config-file config-exp1-200k.json

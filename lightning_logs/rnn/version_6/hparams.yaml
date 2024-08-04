@@ -1,0 +1,21 @@
+activation: tanh
+batch_size: 8
+d_model: 80
+data_dir: /work/tc064/tc064/s2567498/data-w-camera
+data_portion: 0.03
+end_lr: 0.001
+episode_length: 200
+limited_gpu_memory: true
+name: rnn
+num_layers: 3
+num_workers: 0
+prediction_distance: 1
+resnet_checkpoint: /work/tc064/tc064/s2567498/resnet18-f37072fd.pth
+resnet_features: 15
+rnn_hidden_size: 200
+start_lr: 0.005
+stride: 1
+target_feature_indices:
+- 6
+- 7
+window_size: 10
