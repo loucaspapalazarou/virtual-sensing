@@ -1,7 +1,7 @@
 from lightning.pytorch import LightningModule
 import torch
 from torch import nn
-from resnet import ResNetBlock
+from modules.resnet import ResNetBlock
 import torch.nn.functional as F
 
 

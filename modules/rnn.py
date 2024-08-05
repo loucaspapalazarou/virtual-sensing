@@ -1,5 +1,5 @@
 from torch import nn
-from base import BaseModelModule
+from modules.base import BaseModelModule
 import torch
 
 
