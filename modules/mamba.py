@@ -1,5 +1,5 @@
 from mamba_ssm import Mamba  # type: ignore
-from modules.base import BaseModelModule
+from base import BaseModelModule
 import torch
 
 

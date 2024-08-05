@@ -1,6 +1,6 @@
 import torch
 from torch import nn
-from modules.base import BaseModelModule
+from base import BaseModelModule
 
 
 class TransformerModule(BaseModelModule):
