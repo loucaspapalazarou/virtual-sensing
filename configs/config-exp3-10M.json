@@ -1,0 +1,36 @@
+{
+  "data_dir": "data-w-camera",
+  "resnet_checkpoint": "resnet18-f37072fd.pth",
+  "data_portion": 0.015,
+  "episode_length": 200,
+  "batch_size": 8,
+  "num_workers": 0,
+  "max_epochs": 1,
+  "prediction_distance": 1,
+  "window_size": 10,
+  "start_lr": 0.005,
+  "end_lr": 0.001,
+  "activation": "tanh",
+  "stride": 1,
+  "log_every_n_steps": 5,
+  "target_feature_indices": [
+    6,
+    7
+  ],
+  "resnet_features": 15,
+  "transformer": {
+    "num_encoder_layers": 25,
+    "num_decoder_layers": 25,
+    "nhead": 20,
+    "dim_feedforward": 1024
+  },
+  "mamba": {
+    "d_state": 256,
+    "d_conv": 512,
+    "expand": 80
+  },
+  "rnn": {
+    "rnn_hidden_size": 512,
+    "num_layers": 20
+  }
+}
