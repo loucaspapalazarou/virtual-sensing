@@ -5,7 +5,7 @@
 
 ## Introduction
 
-This is the repository that holds all of the code for my dissertation. The main goal is to use machine learning methods to infer robotic sensor outputs. The following is the abstract of the dissertation and cleary explains the task and outcomes.
+This is the repository that holds all of the code for my dissertation. The main goal is to use machine learning methods to infer robotic sensor outputs. The following is the abstract of the dissertation and clearly explains the task and outcomes.
 
 ### Abstract
 
@@ -28,6 +28,47 @@ robotic sensor costs through virtual sensing, with recommendations for employing
 complex models and optimizing data handling strategies
 
 ## Repository Structure
+
+```bash
+.
+├── README.md # this
+├── Virtual_Sensing.pdf # the final report
+├── analysis # notebooks for analysis and graph generation
+│   ├── const.py
+│   ├── img
+│   ├── perf-analysis.ipynb
+│   └── sensor-analysis.ipynb
+├── config.json # the default config
+├── configs # various configuration files for the models
+│   ├── config-exp1-200k.json
+│   ├── config-exp2-600k.json
+│   └── config-exp3-10M.json
+├── data # example data directory
+│   ├── README.md
+│   └── metadata.json
+├── dataset.py # code for the dataset and datamodule
+├── generate_data.py # script to generate data from the defined Isaac Gym task
+├── isaac-gym-docs # the isaac gym docs for convenience (not available online, bundled with code)
+│   ...
+├── lightning_logs # the tensorboard logs, checkpoints and hparam files
+│   ├── mamba
+│   ├── rnn
+│   └── transformer
+├── modules # the models
+│   ├── __init__.py
+│   ├── base.py # base class that handles initialization and forward method
+│   ├── mamba.py
+│   ├── resnet.py
+│   ├── rnn.py
+│   └── transformer.py
+├── scripts # scripts to run the experiments on various machines
+│   ├── cirrus-run-all.sh
+│   ├── cirrus-test-all.sh
+│   ├── submit-beast.sh
+│   └── submit-cirrus.slurm
+├── services.py # defines an email callback when training is done
+└── train.py # the main train file
+```
 
 ## Installation and Setup
 
@@ -116,7 +157,7 @@ python -m tensorboard.main --logdir ./lightning_logs
 For predictions, the `analysis/` folder contains useful examples on how to use the models.
 
 ```python
-# load the a model using its module, a checkpoint and its hyper parameters
+# load a model using its module, a checkpoint, and its hyperparameters
 from modules.transformer import TransformerModule
 from dataset import FrankaDataset
 from torch.utils.data import DataLoader
