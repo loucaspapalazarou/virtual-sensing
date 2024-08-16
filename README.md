@@ -120,6 +120,8 @@ For predictions, the `analysis/` folder contains useful examples on how to use t
 ```python
 # load the a model using its module, a checkpoint and its hyper parameters
 from modules.transformer import TransformerModule
+from dataset import FrankaDataset
+from torch.utils.data import DataLoader
 
 checkpoint = "path/to/model_logs/checkpoints/epoch=0-step=2900.ckpt"
 hparams = "path/to/model_logs/hparams.yaml"
