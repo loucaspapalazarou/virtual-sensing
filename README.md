@@ -5,9 +5,7 @@
 
 ## Introduction
 
-This is the repository that holds all of the code for my dissertation.
-
-...
+This is the repository that holds all of the code for my dissertation. The main goal is to use machine learning methods to infer robotic sensor outputs. The following is the abstract of the dissertation and cleary explains the task and outcomes.
 
 ### Abstract
 
